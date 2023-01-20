@@ -548,9 +548,9 @@ function forceDirected(cluster, selectedNodes) {
     // Sort by either count or pval, break ties with other metric
       rankedClusters = rankedClusters.sort(function (a, b) {
         if(sortByCount){
-          return b["count"] - a["count"] || b["pval"] - a["pval"];
+          return b["count"] - a["count"] || a["pval"] - b["pval"];
         }else{
-          return  b["pval"]- a["pval"] || b["count"] - a["count"];
+          return  a["pval"] - b["pval"] || b["count"] - a["count"];
         }
       });
 
