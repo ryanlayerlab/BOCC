@@ -3,6 +3,7 @@
 <meta charset="utf-8">
 
 <head>
+  <link rel="stylesheet" href="styles.css">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/selectize.js/0.12.6/js/standalone/selectize.min.js" integrity="sha256-+C0A5Ilqmu4QcSPxrlGpaZxJ04VjsRjKu+G82kl5UJk=" crossorigin="anonymous"></script>
@@ -14,6 +15,7 @@
   <script src="https://d3js.org/d3.v4.js"></script>
 
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/selectize.js/0.12.6/css/selectize.bootstrap3.min.css" integrity="sha256-ze/OEYGcFbPRmvCnrSeKbRTtjG4vGLHXgOqsyLFTRjg=" crossorigin="anonymous" />
+  
 </head>
 <body>
 <!-- Create a div where the graph will take place -->
@@ -22,24 +24,44 @@
 <br>
 
 <div  style="text-align:left;font-family: Verdana, sans-serif;font-size: 12px;color:#3C769D;max-width: 50%;">
-  <select id="select-node"  placeholder="Filter by genes or HP terms...",  size="2">
-  </select>
+  <select id="select-node"  placeholder="Filter by genes or HP terms...",  size="2"></select>
 </div>
-<!-- <div class="input-group">
-  <select class="custom-select" id="select-node" style="text-align:left;font-family: Verdana, sans-serif;font-size: 12px;color:#3C769D;max-width: 50%;>
-  </select>
-  <div class="input-group-append">
-    <button class="btn btn-outline-secondary" type="button">Button</button>
-  </div>
-</div> -->
+  <div id="sort-form" style="text-align:left;font-family: Verdana, sans-serif;font-size: 12px;color:#7b7b7b;max-width: 50%;"> 
+    Sort by:
+    <input type="radio" class="form-check-input" id="sort-count" name="optradio" value="option1" checked>
+    <label class="form-check-label" for="radio1">matching terms</label>
+    <input type="radio" class="form-check-input" id="sort-pvalue" name="optradio" value="option2">
+    <label class="form-check-label" for="radio2">discovery pvalue</label>
+</div>  
+
+<table id="cluster-info" class="center" hidden="hidden" style="text-align:center;font-family: Verdana, sans-serif;font-size: 12px;color:#252525;">
+  <tr>
+    <td>
+      <a id="previous" class="previous" hidden="hidden"> &#8249; </a>
+    </td>
+    <td>
+      <small>Cluster <span id="current-cluster">10</span> of <span id="total-clusters">50</span></small><br>
+      <small>Cluster ID: <span id="cluster-id">ParisWalkYrap</span></small><br>
+      <small>Matching Search Terms: <span id="matching-count">1</span>/<span id="total-count">10</span></small><br>
+      <small>Discovery P-Value: <span  id="pval">0.234</span></small><br>
+    </td>
+    <td>
+      
+      <a id="next" class="next" hidden="hidden">&#8250;</a>
+    </td>
+  </td>
+  </td>
+</table>
+
 <div id="my_dataviz"></div>
 </body>
 <script>
+  
 
     // set the dimensions and margins of the graph
     var margin = {top: 10, right: 10, bottom: 10, left: 10},
-      width = 1000 - margin.left - margin.right,
-      height = 1000 - margin.top - margin.bottom;
+      width = 800 - margin.left - margin.right,
+      height = 800 - margin.top - margin.bottom;
 
     let zoom = d3.zoom()
       .scaleExtent([1, 20])
@@ -53,13 +75,17 @@
       .append("g")
         .attr("transform","translate(" + margin.left + "," + margin.top + ")");
 
-    d3.json("https://raw.githubusercontent.com/sky123martin/BOCC/main/network.json", function(data) {
-      // append the svg object to the body of the page
+    d3.json("https://sky123martin.github.io/BOCC/network_extended.json", function(err,data){
+
+
+        // append the svg object to the body of the page
       min_x = Number.MAX_VALUE,
       max_x = -Number.MAX_VALUE;
       min_y = Number.MAX_VALUE,
       max_y = -Number.MAX_VALUE;
-      
+      console.log(err);
+      console.log(data);
+      console.log(Object.keys(data));
       data.nodes.forEach(function (o) {
                 min_x = Math.min(min_x, o["x"]);
                 max_x = Math.max(max_x, o["x"]);
@@ -87,13 +113,13 @@
           .range([ height, 0]);
 
       // function selectCluster(cluster_id){
-      //   d3.selectAll("circle")
+      //   svg.selectAll("circle")
       //     .filter(function(d){ return cluster_id!=d.cluster_id})
       //     .style("fill", "#CAD1E9")
       //     .attr("cx", function (d) { return x(gridX(d.cluster_id)+normX(d.x)); } )
       //     .attr("cy", function (d) { return y(gridY(d.cluster_id)+normY(d.y)); } )
 
-      //   d3.selectAll("circle")
+      //   svg.selectAll("circle")
       //     .filter(function(d){ return cluster_id==d.cluster})
       //     .style("fill", "#3C769D")
       //     .transition()
@@ -102,7 +128,7 @@
       //     .attr("cy", function (d) { return y(gridY(d.cluster_id)+normY(1.5*d.y)); } )
       // }
       // function unselectCluster(cluster_id){
-      //   d3.selectAll("circle")
+      //   svg.selectAll("circle")
       //     .transition()
       //     .duration(100)
       //     .style("fill", "#3C769D")
@@ -111,7 +137,7 @@
       // }
 
       // function clickCluster(cluster_id){
-      //   d3.selectAll("circle")
+      //   svg.selectAll("circle")
       //     .filter(function(d){ return cluster_id==d.cluster_id})
       //     .transition()
       //     .duration(100)
@@ -142,7 +168,9 @@
         .data(data.nodes)
         .enter()
         .append("circle")
-            .attr("id", function (d) { return d.name; } )
+            .attr("id", function (d) { return d.id; } )
+            .attr("stroke", "white")
+            .attr("stroke-width", 0)
             .attr("cx", function (d) { 
               d.defaultx = d.x;
               return x(gridX(d.cluster_id)+normX(d.x)); } )
@@ -151,40 +179,62 @@
               return y(gridY(d.cluster_id)+normY(d.y)); } )
             .attr("r", 1)
             .attr("fill", function(d) { 
-              if (d.name[2]==":"){
+              if (d.id[2]==":"){
                 return "#27476E";
               }else{
                 return "#81ADC8";
               };});
-            
+              
+  // displayCluster(["paris.infomap.2021:1880"],["BRCA1"]);
+  // displayCluster(["paris.cesna.2021:3199"],[]);     
   }
+
   $(document).ready(function() {
-    buildSelectize([]);
+    buildSelectize();
     loadAll();
   });
-    
-    function intersection(setA, setB) {
-      const result = new Set();
-      for (const elem of setA) {
-          if (setB.has(elem)) {
-              result.add(elem);
-          }
-      }
-        return result;
-    }
 
 // FORCE DIRECTED LAYOUT
 function forceDirected(cluster, selectedNodes) {
   d3.json("https://raw.githubusercontent.com/sky123martin/BOCC/main/clusters/"+cluster.replace(":",".")+".json", function(clusterdata) {
 
   var edges = clusterdata["edges"];
-  var nodes = [];
+  var nodes = clusterdata["nodes"];
   var node_list = [];
 
+  node_list.forEach(function (o) {
+    if(o[2]==":"){
+      min_d = Math.min(min_d, data.hpoDepth[o]);
+      max_d = Math.max(max_d, data.hpoDepth[o]);
+    }});      
+
+  var x = d3.scaleLinear()
+    .domain([0, 0.75])
+    .range([ 0, width]);
+
+  var y = d3.scaleLinear()
+      .domain([0, 0.75])
+      .range([0, height]);
+
   // filter nodes and edges from a specific cluster
-  data.nodes.forEach(function(n){if(n.cluster==cluster){nodes.push(n);}});
+  // data.nodes.forEach(function(n){if(n.cluster==cluster){nodes.push(n);}});
   nodes.forEach(function(n){node_list.push(n.name)});
   // data.edges.forEach(function(e){if(node_list.includes(e.source) & node_list.includes(e.target)){edges.push(e);}});
+  min_d = Number.MAX_VALUE,
+  max_d = -Number.MAX_VALUE;
+  node_list.forEach(function (o) {
+    if(o[2]==":"){
+      min_d = Math.min(min_d, data.hpoDepth[o]);
+      max_d = Math.max(max_d, data.hpoDepth[o]);
+    }});      
+  var cScale = d3.scaleLinear()
+      .domain([min_d ,max_d])
+      .range(["black", "lightgrey"]);
+
+  // radial scale
+  var radialScale = d3.scaleLinear()
+      .domain([min_d, max_d])
+      .range([width*5/12, width*2/12]);
 
   // initialize the edges
   var link = svg
@@ -197,9 +247,33 @@ function forceDirected(cluster, selectedNodes) {
       .style("opacity", 0.1);
 
   // initialize the nodes
-  var node = svg
+
+  svg
     .selectAll("circle")
-    .filter(function(d){return node_list.includes(d.name) & d.cluster==cluster;});
+    .remove();
+
+  var node = svg
+        .selectAll("circle")
+        .data(clusterdata.nodes)
+        .enter()
+        // .filter(function (d) { return d.cluster==cluster; } )
+        .append("circle")
+            .attr("id", function (d) { return d.id; } )
+            .attr("stroke", "white")
+            .attr("stroke-width", 0)
+            .attr("cx", function (d) { 
+              d.x = x(normX(d.x));
+              return x(normX(d.x)); } )
+            .attr("cy", function (d) { 
+              d.y = y(normY(d.y));
+              return y(normY(d.y)); } )
+            .attr("r", 10)
+            .attr("fill", function(d) { 
+              if (d.id[2]==":"){
+                return "#27476E";
+              }else{
+                return "#81ADC8";
+              };});
 
   // initialize the labels
   var labels = svg
@@ -209,7 +283,7 @@ function forceDirected(cluster, selectedNodes) {
     .append("text")
       .style("font-family","Tahoma")
       .style("font-size","10px")
-      .style("color","black")
+      // .style("color","black")
       .style("opacity", 0.50);
 
   // simulate network with repulision and springs
@@ -217,32 +291,98 @@ function forceDirected(cluster, selectedNodes) {
       .force('charge', d3.forceManyBody())
       .force("link", 
         d3.forceLink()
-            .id(function(d) { return d.name; }) // This provide  the id of a node
+            .id(function(d) { return d.id; }) // This provide  the id of a node
             .links(edges) // and this the list of links
        )
-      .force("charge", d3.forceManyBody().strength(-500)) // repulsion between nodes
-      .force("collide", d3.forceCollide(15).iterations(2)) // 15 is raduis and run collisions to reduce overlap
-      .force("center", d3.forceCenter(width * .4, height * .4)) // attracts nodes to the center
-      .on("end", ticked); // draw
+      .force("charge", d3.forceManyBody().strength(-200)) // repulsion between nodes
+      .force("collide", d3.forceCollide(30).iterations(20)) // 15 is raduis and run collisions to reduce overlap
+      .force("center", d3.forceCenter(width * .5, height * .5)) // attracts nodes to the center
+      .force("radial", d3.forceRadial(d => d.id[2]===":" ? radialScale(data.hpoDepth[d.id]): width/10, width / 2, height / 2).strength(d => d.id[2]===":" ? 10 : 2))
+      .on("tick", ticked)
+      .on("end", function(d){
+      // after nodes draw labels
+        labels
+          .attr("x", function (d) { return   2 + Math.max(margin.left, Math.min(width - margin.left, d.x*scaling_factor )); })
+          .attr("y", function(d) { return -10 + Math.max(margin.top, Math.min(width - margin.top, d.y*scaling_factor )); })
+          .attr("text-anchor", function(d) {
+            if(d.id[2]!=":"){
+              return "middle"
+            }else if( (2 + Math.max(margin.left, Math.min(width - margin.left, d.x*scaling_factor )))>width/2){
+              return "start"
+            }else{
+              return "end"
+            };})
+          .text(function(d) {
+            if(d.id[2]==":"){
+              return data.nodeLabels[d.id];//.slice(3);
+            }else{
+              return d.id;
+            };})
+        labels
+            .on("click", function(d){
+            if(d.id[2]==':'){
+              window.open("https://hpo.jax.org/app/browse/term/"+d.id);
+            }else{
+              window.open("https://gnomad.broadinstitute.org/gene/"+d.id);
+              window.open("https://gtexportal.org/home/gene/"+d.id);
+            };  
+            })
+          labels
+            .raise();
+        return form.enable(); // enable form
+      });
   
   // network scaling factor
   var scaling_factor = 1;
 
-  // updating the nodes position during dragging
-  function nodeHover(d) {
-    var link = svg
-      .filter()
-      .style("stroke", "black")
-      .style("stroke-width", 1)
-      .style("opacity", 0.1);
-  }
+  node
+      .call(d3.drag().on("drag", dragged))
+
+  node
+    .on('mouseover', function (d) {
+      // Highlight the nodes: every node is green except of him
+      // Highlight the connections
+      node
+        .style('opacity',0.6)
+      labels
+        .style('opacity',0.05)
+      link
+        .style('opacity',0.05)
+
+      link
+        .filter(function(link_d){return link_d.source.id === d.id || link_d.target.id === d.id;})
+        .style('opacity', function (link_d) { 
+            node
+              .filter(function(l) { return link_d.source.id === l.id || link_d.target.id === l.id; })
+              .style('opacity', 1)
+            labels
+              .filter(function(l) { return link_d.source.id === l.id || link_d.target.id === l.id; })
+              .style('opacity',0.7)
+            return 0.4;
+        })
+    })
+    .on('mouseout', function (d) {
+      node
+        .style('opacity', 1)
+      link
+        .style('opacity',  0.1)
+      labels
+        .style('opacity',  0.5)
+    });
+
   // updating the nodes position during dragging
   function dragged(d) {
     d.x = d3.event.x, d.y = d3.event.y;
     d3.select(this).attr("cx", d.x*scaling_factor).attr("cy", d.y*scaling_factor);
     link.filter(function(l) { return l.source === d; }).attr("x1", d.x*scaling_factor).attr("y1", d.y*scaling_factor);
     link.filter(function(l) { return l.target === d; }).attr("x2", d.x*scaling_factor).attr("y2", d.y*scaling_factor);
-    labels.filter(function(n) { return n.name === d.name; }).attr("x", 2+d.x*scaling_factor).attr("y",-10+d.y*scaling_factor);
+    labels.filter(function(n) { return n.id === d.id; }).attr("x", 2+d.x*scaling_factor).attr("y",-10+d.y*scaling_factor);
+    node
+        .style('opacity', 1)
+      link
+        .style('opacity',  0.1)
+      labels
+        .style('opacity',  0.5)
   }
   // run after force simulation
   
@@ -250,8 +390,13 @@ function forceDirected(cluster, selectedNodes) {
     //draw nodes
     node
       .interrupt()
-      .transition()
-      .duration(7000)
+      .style("fill", function (d) { 
+        if (d.id[2]==":"){
+          return cScale(data.hpoDepth[d.id]);
+        }else{
+          return "lightblue";
+        }
+      })
       .attr("cx", function (d) { 
         d.x = Math.max(margin.left, Math.min(width - margin.left, d.x*scaling_factor ));
         return Math.max(margin.left, Math.min(width - margin.left, d.x*scaling_factor )); })
@@ -259,230 +404,187 @@ function forceDirected(cluster, selectedNodes) {
         d.y = Math.max(margin.top, Math.min(width - margin.top, d.y*scaling_factor )); 
         return Math.max(margin.top, Math.min(width - margin.top, d.y*scaling_factor )); })
       .attr("r",  function(d) {
-        if(selectedNodes.includes(d.name)){
+        if(selectedNodes.includes(d.id)){
           return 20
         }else{
           return 10
         }
       })
-      .on("end", function(d){
-        // after nodes draw labels
-          labels
-            .transition()
-            .delay(10)
-            .attr("x", function (d) { return   2 + Math.max(margin.left, Math.min(width - margin.left, d.x*scaling_factor )); })
-            .attr("y", function(d) { return -10 + Math.max(margin.top, Math.min(width - margin.top, d.y*scaling_factor )); })
-            .text(function(d) {
-              if(d.name[2]==':'){
-                return d.name;//.slice(3);
-              }else{
-                return d.name;
-              };})
-          labels
-              .on("click", function(d){
-              if(d.name[2]==':'){
-                window.open("https://hpo.jax.org/app/browse/term/"+d.name);
-              }else{
-                window.open("https://gnomad.broadinstitute.org/gene/"+d.name);
-                window.open("https://gtexportal.org/home/gene/"+d.name);
-              };  
-              })
-            labels
-              .raise();
-          return form.enable(); // enable form
-        })
     // raise nodes above edges
     node
       .raise();
     // draw edges
+
     link
       .attr("x1", function(d) { return Math.max(margin.left, Math.min(width - margin.left, d.source.x*scaling_factor )); })
       .attr("y1", function(d) { return Math.max(margin.left, Math.min(height - margin.left, d.source.y*scaling_factor ));})
       .attr("x2", function(d) { return Math.max(margin.left, Math.min(width - margin.left, d.target.x*scaling_factor )); })
       .attr("y2", function(d) { return Math.max(margin.left, Math.min(height - margin.left, d.target.y*scaling_factor )); });
-    // setup dragging
-    node
-      .call(d3.drag().on("drag", dragged))
-    node
-      .on('mouseover', function (d) {
-        // Highlight the nodes: every node is green except of him
-        d3.select(this).style('opacity', 1)
-        // Highlight the connections
-        link
-          .style('opacity', function (link_d) { 
-            return link_d.source === d.name || link_d.target === d.name? 1 : 0.0;
-          })
-      })
-      .on('mouseout', function (d) {
-        node
-          .style('opacity', 1)
-        link
-          .style('opacity',  0.1)
-      });
     };
+
+
     })};
 
   ////////////////////////
   // GENES/HP TERM FORM //
   ////////////////////////
   
-  function displayClusters(filteredClusters, selections){
-
-    // record number of clusteres to visualize
-    let max_clusters = filteredClusters.length;
-
-    // calculate grid size
-    let grid_size = Math.ceil(Math.sqrt(max_clusters));
+  function displayCluster(cluster_info, selections){
+    var cluster = cluster_info["cluster"];
 
 
-    var x = d3.scaleLinear()
-      .domain([0, grid_size])
-      .range([ 0, width ]);
-
-    var y = d3.scaleLinear()
-        .domain([0, grid_size])
-        .range([0,height]);
+    // clean up network drawing
+    svg.selectAll("circle")
+      .attr("fill", function(d) { 
+            if (d.id[2]==":"){
+              return "#27476E";
+            }else{
+              return "#81ADC8";
+            };});
+              
+    svg.selectAll("line").remove();
+    svg.selectAll("text").remove();
     
-    // convert index to grid
-    function gridY(a) {return Math.floor(a/grid_size);}
-    function gridX(a) {return a%grid_size;}
-
-    var cluster_id_lookup = {}
-    filteredClusters.forEach(function(cluster, index){cluster_id_lookup[cluster]=index;})
-
-    d3.selectAll("line").remove();
-    d3.selectAll("text").remove();
+    // remove all nodes
+    svg.selectAll("circle")
+      .filter(function(d){return cluster!=d.cluster;})
+      .remove()
     
-    d3.selectAll("circle")
-      .filter(function(d){return selections.includes(d.name);})
-      .attr("raduis","grey")
-      .attr("stroke-width", 1)
-
-    d3.selectAll("circle")
-      .filter(function(d){return selections.includes(d.name)==false;})
-      .attr("stroke", "white")
-      .attr("stroke-width", 0)
-    
-    // EXIT NON CLUSTER NODES
-    d3.selectAll("circle")
-      .filter(function(d){return filteredClusters.includes(d.cluster)==false;})
-      .transition()
-      .duration(8000)
-          .attr("r",0)
-    
-    if(filteredClusters.length==1){
+    if(cluster==cluster){
       // ENTER CLUSTER NODES
-      d3.selectAll("circle")
-          .filter(function(d){return filteredClusters.includes(d.cluster);})
-          .transition()
-          .duration(20000)
-            .attr("cx", function (d) { return x(gridX(cluster_id_lookup[d.cluster])+normX(d.defaultx));} )
-            .attr("cy", function (d) { return y(gridY(cluster_id_lookup[d.cluster])+normY(d.defaulty));} )
-            .attr("r", 10);
-      
-      forceDirected(filteredClusters[0], selections);
-    }else if(filteredClusters.length>1 & selections.length>0){
-      // initialize the labels
-      var labels = svg
-        .selectAll("text")
-        .data(filteredClusters)
-        .enter()
-        .append("text")
-          .style("font-family","Tahoma")
-          .style("font-size","10px")
-          .style("color","black")
-          .style("opacity", 1);
-
-      
-      d3.selectAll("circle")
-      .filter(function(d){return filteredClusters.includes(d.cluster);})
-      .transition()
-      .duration(10000)
-      .attr("cx", function (d) { return x(gridX(cluster_id_lookup[d.cluster])+normX(d.defaultx));} )
-      .attr("cy", function (d) { return y(gridY(cluster_id_lookup[d.cluster])+normY(d.defaulty));} )
-      .attr("r", 5)
-      .on("end", form.enable());
-          
-      labels
-          .transition()
-          .delay(10000)
-          .attr("x", function (d) { return  x(gridX(cluster_id_lookup[d])); })
-              .attr("y", function(d) { return y(gridY(cluster_id_lookup[d])); })
-              .text(function(d) { return d})
-      labels
-        .on("click", function(d) { 
-          form.addItem(d);
-          form.refreshItems();
-          return displayClusters([d], selections)});
-
+      forceDirected(cluster, selections);
     }else{
-      d3.selectAll("circle")
-        .filter(function(d){return filteredClusters.includes(d.cluster);})
-        .transition()
-        .duration(10000)
-          .attr("cx", function (d) { return x(gridX(cluster_id_lookup[d.cluster])+normX(d.defaultx));} )
-          .attr("cy", function (d) { return y(gridY(cluster_id_lookup[d.cluster])+normY(d.defaulty));} )
-          .attr("r", 1)
-          .on("end",form.enable())
+      loadAll()
+      // svg.selectAll("circle")
+      //   .filter(function(d){return filteredClusters.includes(d.cluster);})
+      //   .transition()
+      //   .duration(1000)
+      //     .attr("cx", function (d) { return x(gridX(cluster_id_lookup[d.cluster])+normX(d.defaultx));} )
+      //     .attr("cy", function (d) { return y(gridY(cluster_id_lookup[d.cluster])+normY(d.defaulty));} )
+      //     .attr("r", 1)
+      //     .attr("fill", function(d) { 
+      //         if (d.id[2]==":"){
+      //           return "#27476E";
+      //         }else{
+      //           return "#81ADC8";
+      //         };})
+      //     .on("end",form.enable())
+          
+      // svg.selectAll("circle")
+      //   .data(data.nodes)
+      //   .enter()
+      //   .append("circle")
+      //       .filter(function(d){
+      //         return (hiddenClusters.includes(d.cluster));})
+      //       .transition()
+      //       .delay(1000)
+      //       .attr("id", function (d) { 
+      //         console.log(d.id);
+      //         return d.id; } )
+      //       .attr("cx", function (d) { 
+      //         d.defaultx = d.x;
+      //         return x(gridX(cluster_id_lookup[d.cluster])+normX(d.x)); } )
+      //       .attr("cy", function (d) { 
+      //         d.defaulty = d.y;
+      //         return y(gridY(cluster_id_lookup[d.cluster])+normY(d.y)); } )
+      //       .attr("r", 1)
+      //       .attr("fill", function(d) { 
+      //         if (d.id[2]==":"){
+      //           return "#27476E";
+      //         }else{
+      //           return "#81ADC8";
+      //         };});
     }
   }
-  function processSelection() {
+  
+  function processSelection(ranking=1) {
     let selections = form.items;
-    
-    // filter to only the filter nodes
-    let filteredClusters = new Set();
-    let temp = new Set();
-    
     if (selections.length>0){
-      // check for clusters
-      // filter nodes
-      for (let i = 0; i < selections.length; i++) {
-        if (data.clusters.includes(selections[i])){
-          filteredClusters = [selections[i]]
-          break;
-        }
-        // collect cluster that contains a certain node
-        temp.clear();
-        data.nodes.forEach(function(node){if(selections[i] == node["name"]){temp.add(node.cluster);}});
-        if(i==0){filteredClusters = new Set(temp);}else{filteredClusters = intersection(filteredClusters, temp);}
-      };
-      filteredClusters = Array.from(filteredClusters)
-    }else{
-      filteredClusters =  data.clusters;
-    }
+      let sortByCount = document.getElementById("sort-count").checked;
+      // filter to only the filter nodes
+      let filteredClusters = {};
+      var node;
 
-    displayClusters(filteredClusters, selections);
-    buildLimitedSelectize(filteredClusters, selections);
+      // count genes and hpo terms in cluster
+      if (selections.length > 0){
+        // union of all cluster with selected genes and HPS
+        // for each selection
+        // find clusters it is in and add one to cluster score
+        for (let i = 0; i < selections.length; i++) {
+          data.nodes.forEach(function(node){
+            if( node.id == selections[i]){
+              if (Object.keys(filteredClusters).includes(node.cluster)){// if cluster has already been added to dict, update its count
+                filteredClusters[node.cluster][((node.id[2]==":") ? "HPO count" : "gene count")] += 1;
+                filteredClusters[node.cluster]["count"] += 1;
+              }else{// if cluster hasnt then add to dict
+                filteredClusters[node.cluster] = {}
+                filteredClusters[node.cluster]["HPO count"] = ((node.id[2]==":") ? 1 : 0);
+                filteredClusters[node.cluster]["gene count"] = ((node.id[2]==":") ? 0 : 1);
+                filteredClusters[node.cluster]["count"] = 1;
+                filteredClusters[node.cluster]["pval"] = data.pval[node.cluster];
+              }
+            }
+          })
+        }
+      }
+      // convert dict to list of dicts
+      var rankedClusters = [];
+      Object.keys(filteredClusters).forEach(function(cluster){
+        rankedClusters.push({"cluster":cluster,
+                            "HPO count": filteredClusters[cluster]["HPO count"],
+                            "gene count": filteredClusters[cluster]["gene count"],
+                            "count": filteredClusters[cluster]["count"],
+                            "pval": filteredClusters[cluster]["pval"]});
+      });
+
+    // Sort by either count or pval, break ties with other metric
+      rankedClusters = rankedClusters.sort(function (a, b) {
+        if(sortByCount){
+          return b["count"] - a["count"] || b["pval"] - a["pval"];
+        }else{
+          return  b["pval"]- a["pval"] || b["count"] - a["count"];
+        }
+      });
+
+      // console.log(rankedClusters, selections)
+      document.getElementById("cluster-info").hidden = "";
+      document.getElementById("current-cluster").innerHTML = ranking;
+      document.getElementById("total-clusters").innerHTML = rankedClusters.length;
+      document.getElementById("cluster-id").innerHTML = rankedClusters[ranking-1]["cluster"];
+      document.getElementById("matching-count").innerHTML = rankedClusters[ranking-1]["count"];
+      document.getElementById("total-count").innerHTML = selections.length;
+      document.getElementById("pval").innerHTML = rankedClusters[ranking-1]["pval"];
+
+      if( ranking<rankedClusters.length){document.getElementById("next").hidden = "";
+      }else{ document.getElementById("next").hidden = "hidden";}
+
+      console.log(ranking, rankedClusters.length)
+      if( ranking>1){document.getElementById("previous").hidden = "";
+      }else{document.getElementById("previous").hidden = "hidden";}
+
+      console.log(rankedClusters[ranking-1])
+      displayCluster(rankedClusters[ranking-1], selections);
+  }else{
+    svg.selectAll("line").remove();
+    svg.selectAll("text").remove();
+    svg.selectAll("circle").remove();
+    document.getElementById("cluster-info").hidden = "hidden";
+    loadAll();
+  }
   };
   
-  function buildLimitedSelectize(filteredClusters, selections){
-    var visibleGenes = new Set();
-    var visibleHPs = new Set();
-    var visibleClusters = new Set();
+  function updateSelectize(){
+    var selectedOptions = Array.from(form.items);
     var optionsArray = [];
-
-    data.nodes.forEach(function(d){
-      if (filteredClusters.includes(d.cluster)){
-        visibleClusters.add(d.cluster);
-        if (d.name[2]==":"){
-          visibleHPs.add(d.name);
-        }else{
-          visibleGenes.add(d.name);
-        }
-      }});
-    
-    Array.from(visibleGenes).forEach(function(o){optionsArray.push({name:o, value:o, group:"gene"})});
-    Array.from(visibleHPs).forEach(function(o){optionsArray.push({name:o, value:o, group:"HP"})});
-    Array.from(filteredClusters).forEach(function(o){optionsArray.push({name:o, value:o, group:"cluster"})});
-
-    // form.clear();
+    console.log(selectedOptions)
+    data.genes.forEach(function(o){if(!selectedOptions.includes(o)){optionsArray.push({name:o, value:o, group:"gene"})}});
+    data.diseases.forEach(function(o){if(!selectedOptions.includes(o)){optionsArray.push({name:o, value:o, group:"HP"})}});
+    data.clusters.forEach(function(o){if(!selectedOptions.includes(o)){optionsArray.push({name:o, value:o, group:"cluster"})}});
     form.clearOptions();
     optionsArray.forEach(function(o){form.addOption(o)})
-    // .forEach(function(o){form.load(Array.from(optionsArray));  
-    //form.refreshOptions()
-    // form.setValue(selectedOptions);
   }
-  function buildSelectize(selectedOptions){
+
+  function buildSelectize(){
     var optionsArray = [];
     
     data.genes.forEach(function(o){optionsArray.push({name:o, value:o, group:"gene"})});
@@ -506,16 +608,29 @@ function forceDirected(cluster, selectedNodes) {
                       sortField: "text",
                       maxItems: 10,
                       text:true,
-                      closeAfterSelect: true,
-                      onDropdownClose: function (){processSelection();}
-                      //onChange: function (){buildSelectize(selectedOptions);}
+                      onChange: function (){updateSelectize();},
+                      onDropdownClose: function (){processSelection(1);}
                   });
 
     form = $form[0].selectize;   
-    form.setValue(selectedOptions)  
+    form.setValue([])  
   }   
-  
-    });
-    
-    
+  function clickNext(){
+    processSelection(parseInt(document.getElementById("current-cluster").innerHTML)+1);
+  };
+
+  function clickPrevious(){
+    processSelection(parseInt(document.getElementById("current-cluster").innerHTML)-1);
+  };
+
+  $('.next').mousedown(function(){clickNext();});
+  $('.previous').mousedown(function(){clickPrevious();});
+  document.getElementById("sort-form").addEventListener('click', function (event) {
+    if (event.target && event.target.matches("input[type='radio']")) {
+        processSelection();
+    }
+});
+});
+
+
     </script>
