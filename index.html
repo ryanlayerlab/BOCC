@@ -91,9 +91,6 @@
       max_x = -Number.MAX_VALUE;
       min_y = Number.MAX_VALUE,
       max_y = -Number.MAX_VALUE;
-      console.log(err);
-      console.log(data);
-      console.log(Object.keys(data));
       data.nodes.forEach(function (o) {
                 min_x = Math.min(min_x, o["x"]);
                 max_x = Math.max(max_x, o["x"]);
@@ -507,18 +504,29 @@ function forceDirected(cluster, selectedNodes) {
   
   function processSelection(ranking=1) {
     let selections = form.items;
-    if (selections.length>0){
+    if(selections.length>0){
+      console.log(selections);
       let sortByCount = document.getElementById("sort-count").checked;
       // filter to only the filter nodes
       let filteredClusters = {};
       var node;
-
+      var selectedClusters = [];
       // count genes and hpo terms in cluster
-      if (selections.length > 0){
         // union of all cluster with selected genes and HPS
         // for each selection
         // find clusters it is in and add one to cluster score
         for (let i = 0; i < selections.length; i++) {
+          if(data.clusters.includes(selections[i])){
+            selectedClusters.push(selections[i])
+            
+            if (!(selections[i] in filteredClusters)){// if cluster has already been added to dict, update its count
+                filteredClusters[selections[i]] = {}
+                filteredClusters[selections[i]]["HPO count"] = 0;
+                filteredClusters[selections[i]]["gene count"] = 0;
+                filteredClusters[selections[i]]["count"] = 0;
+                filteredClusters[selections[i]]["pval"] = data.pval[selections[i]];
+              }
+          }else{
           data.nodes.forEach(function(node){
             if( node.id == selections[i]){
               if (Object.keys(filteredClusters).includes(node.cluster)){// if cluster has already been added to dict, update its count
@@ -534,16 +542,18 @@ function forceDirected(cluster, selectedNodes) {
             }
           })
         }
-      }
+        }
+      
       // convert dict to list of dicts
       var rankedClusters = [];
       Object.keys(filteredClusters).forEach(function(cluster){
-        rankedClusters.push({"cluster":cluster,
-                            "HPO count": filteredClusters[cluster]["HPO count"],
-                            "gene count": filteredClusters[cluster]["gene count"],
-                            "count": filteredClusters[cluster]["count"],
-                            "pval": filteredClusters[cluster]["pval"]});
-      });
+        if(selectedClusters.length==0 || selectedClusters.includes(cluster) ){
+          rankedClusters.push({"cluster":cluster,
+                              "HPO count": filteredClusters[cluster]["HPO count"],
+                              "gene count": filteredClusters[cluster]["gene count"],
+                              "count": filteredClusters[cluster]["count"],
+                              "pval": filteredClusters[cluster]["pval"]});
+          }});
 
     // Sort by either count or pval, break ties with other metric
       rankedClusters = rankedClusters.sort(function (a, b) {
@@ -560,7 +570,7 @@ function forceDirected(cluster, selectedNodes) {
       document.getElementById("total-clusters").innerHTML = rankedClusters.length;
       document.getElementById("cluster-id").innerHTML = rankedClusters[ranking-1]["cluster"];
       document.getElementById("matching-count").innerHTML = rankedClusters[ranking-1]["count"];
-      document.getElementById("total-count").innerHTML = selections.length;
+      document.getElementById("total-count").innerHTML = selections.length-selectedClusters.length;
       document.getElementById("pval").innerHTML = rankedClusters[ranking-1]["pval"];
 
       if( ranking<rankedClusters.length){document.getElementById("next").hidden = "";
@@ -570,7 +580,6 @@ function forceDirected(cluster, selectedNodes) {
       if( ranking>1){document.getElementById("previous").hidden = "";
       }else{document.getElementById("previous").hidden = "hidden";}
 
-      console.log(rankedClusters[ranking-1])
       displayCluster(rankedClusters[ranking-1], selections);
   }else{
     svg.selectAll("line").remove();
@@ -584,7 +593,6 @@ function forceDirected(cluster, selectedNodes) {
   function updateSelectize(){
     var selectedOptions = Array.from(form.items);
     var optionsArray = [];
-    console.log(selectedOptions)
     data.genes.forEach(function(o){if(!selectedOptions.includes(o)){optionsArray.push({name:o, value:o, group:"gene"})}});
     data.diseases.forEach(function(o){if(!selectedOptions.includes(o)){optionsArray.push({name:o, value:o, group:"HP"})}});
     data.clusters.forEach(function(o){if(!selectedOptions.includes(o)){optionsArray.push({name:o, value:o, group:"cluster"})}});
