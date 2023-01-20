@@ -37,9 +37,11 @@
 <div id="layout-form" style="text-align:left;font-family: Verdana, sans-serif;font-size: 12px;color:#7b7b7b;max-width: 50%;"> 
   Network Layout:
   <input type="radio" class="form-check-input" id="layout-spring" name="optradio1" value="option1" checked>
-  <label class="form-check-label" for="radio1">spring layout</label>
+  <label class="form-check-label" for="radio1">spring</label>
   <input type="radio" class="form-check-input" id="layout-HPO" name="optradio1" value="option2">
-  <label class="form-check-label" for="radio2">HPO hierarchy</label>
+  <label class="form-check-label" for="radio2">HPO radial</label>
+  <input type="radio" class="form-check-input" id="layout-bipartite" name="optradio1" value="option2">
+  <label class="form-check-label" for="radio2">bipartite</label>
 </div>  
 
 <table id="cluster-info" class="center" hidden="hidden" style="text-align:center;font-family: Verdana, sans-serif;font-size: 12px;color:#252525;">
@@ -241,6 +243,11 @@ function forceDirected(cluster, selectedNodes) {
       .domain([min_d, max_d])
       .range([width*5/12, width*2/12]);
 
+  // bipartite scale
+  var bipartiteScale = d3.scaleLinear()
+      .domain([min_d, max_d])
+      .range([width*5/10, width*9/10]);
+
   // initialize the edges
   var link = svg
     .selectAll("line")
@@ -303,6 +310,7 @@ function forceDirected(cluster, selectedNodes) {
       .force("collide", d3.forceCollide(30).iterations(20)) // 15 is raduis and run collisions to reduce overlap
       .force("center", d3.forceCenter(width * .5, height * .5)) // attracts nodes to the center
       .force("radial",d3.forceRadial(d => d.id[2]===":" ? radialScale(data.hpoDepth[d.id]): width/10, width / 2, height / 2).strength(d => document.getElementById("layout-HPO").checked ? (d.id[2]===":" ? 10 : 2): 0 ))
+      .force("y", d3.forceX().x(d => (d.id[2]===":" ? bipartiteScale(data.hpoDepth[d.id]):height / 10)).strength(d => document.getElementById("layout-bipartite").checked ? 10: 0 ))
       .on("tick", ticked)
       .on("end", function(d){
       // after nodes draw labels
@@ -459,46 +467,7 @@ function forceDirected(cluster, selectedNodes) {
       // ENTER CLUSTER NODES
       forceDirected(cluster, selections);
     }else{
-      loadAll()
-      // svg.selectAll("circle")
-      //   .filter(function(d){return filteredClusters.includes(d.cluster);})
-      //   .transition()
-      //   .duration(1000)
-      //     .attr("cx", function (d) { return x(gridX(cluster_id_lookup[d.cluster])+normX(d.defaultx));} )
-      //     .attr("cy", function (d) { return y(gridY(cluster_id_lookup[d.cluster])+normY(d.defaulty));} )
-      //     .attr("r", 1)
-      //     .attr("fill", function(d) { 
-      //         if (d.id[2]==":"){
-      //           return "#27476E";
-      //         }else{
-      //           return "#81ADC8";
-      //         };})
-      //     .on("end",form.enable())
-          
-      // svg.selectAll("circle")
-      //   .data(data.nodes)
-      //   .enter()
-      //   .append("circle")
-      //       .filter(function(d){
-      //         return (hiddenClusters.includes(d.cluster));})
-      //       .transition()
-      //       .delay(1000)
-      //       .attr("id", function (d) { 
-      //         console.log(d.id);
-      //         return d.id; } )
-      //       .attr("cx", function (d) { 
-      //         d.defaultx = d.x;
-      //         return x(gridX(cluster_id_lookup[d.cluster])+normX(d.x)); } )
-      //       .attr("cy", function (d) { 
-      //         d.defaulty = d.y;
-      //         return y(gridY(cluster_id_lookup[d.cluster])+normY(d.y)); } )
-      //       .attr("r", 1)
-      //       .attr("fill", function(d) { 
-      //         if (d.id[2]==":"){
-      //           return "#27476E";
-      //         }else{
-      //           return "#81ADC8";
-      //         };});
+      loadAll();
     }
   }
   
