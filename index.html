@@ -313,7 +313,7 @@ function forceDirected(cluster, selectedNodes) {
               return "end"
             };})
           .text(function(d) {
-            if(d.id[2]==":"){
+            if(d.id[2]==":" && d.id in data.nodeLabels){
               return data.nodeLabels[d.id];//.slice(3);
             }else{
               return d.id;
