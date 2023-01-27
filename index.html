@@ -50,7 +50,11 @@
 </div>   -->
 <div style="text-align:left;font-family: Verdana, sans-serif;font-size: 12px;color:#7b7b7b;max-width: 50%;"> 
   <label><input type="checkbox" value="" id="hpoParents"> include out of cluster HPO parents</label>
-</div>  
+  <br>
+  <label><input type="checkbox" value="" id="hpoLabel"> full HPO label</label>
+  <label><input type="checkbox" value="" id="geneLabel"> full gene label</label>
+
+</div>
 
 
 <table id="cluster-info" class="center" hidden="hidden" style="text-align:center;font-family: Verdana, sans-serif;font-size: 12px;color:#252525;">
@@ -308,7 +312,7 @@ function forceDirected(cluster, selectedNodes) {
             .links(edges) // and this the list of links
        )
       .force("charge", d3.forceManyBody().strength(-200)) // repulsion between nodes
-      .force("collide", d3.forceCollide(document.getElementById("layout-bipartite").checked ? 10 : 20).iterations(10)) // 15 is raduis and run collisions to reduce overlap
+      .force("collide", d3.forceCollide(document.getElementById("layout-bipartite").checked ? 10 : 15).iterations(10)) // 15 is raduis and run collisions to reduce overlap
       .force("center", d3.forceCenter(width * .5, height * .5)) // attracts nodes to the center
       .force("radial",d3.forceRadial(d => d.id[2]===":" ? radialScale(data.hpoDepth[d.id]): 0, width / 2, height / 2).strength(d => document.getElementById("layout-HPO").checked ? (d.id[2]===":" ? 5 : 1): 0 ))
       .force("x", d3.forceX().x(d => (d.id[2]===":" ? bipartiteScale(data.hpoDepth[d.id]):width*3/ 10)).strength(d => document.getElementById("layout-bipartite").checked ? 200: 0 ))
@@ -318,36 +322,30 @@ function forceDirected(cluster, selectedNodes) {
         labels
           .attr("id",function(d) {return d.id})
           .style("background-color","white")
-          .attr("x", function (d) { return   2 + Math.max(margin.left, Math.min(width - margin.left, d.x*scaling_factor )); })
-          .attr("y", function(d) { return -10 + Math.max(margin.top, Math.min(width - margin.top, d.y*scaling_factor )); })
-          // .append('tspan')
+          .attr("x", function (d) { return  (document.getElementById("layout-bipartite").checked ? 0:2) + Math.max(margin.left, Math.min(width - margin.left, d.x*scaling_factor )); })
+          .attr("y", function(d) { return (document.getElementById("layout-bipartite").checked ? -4:-8) + Math.max(margin.top, Math.min(width - margin.top, d.y*scaling_factor )); })
           .attr("class","nodeID")
-          .attr("text-anchor", "start")
-          .text(function(d) {
-            if(d.id[2]===":" && d.id in data.nodeLabels){
-              return data.nodeLabels[d.id];
+          .attr("text-anchor", function(d) {
+            if( (2 + Math.max(margin.left, Math.min(width - margin.left, d.x*scaling_factor )))>width/2){
+              return "start"
             }else{
-              return d.id;
-            }});
-
-        labels
-          .append('tspan')
-          .attr("class","fullLabel")
-          .style("background-color","white")
-          .attr("x", function (d) { return   10 + Math.max(margin.left, Math.min(width - margin.left, d.x*scaling_factor )); })
-          .attr("y", function(d) { return -2 + Math.max(margin.top, Math.min(width - margin.top, d.y*scaling_factor )); })
-          .attr("text-anchor", "start")
-          // function(d) {
-          //   if(d.id[2]!=":"){
-          //     return "middle"
-          //   }else if( (2 + Math.max(margin.left, Math.min(width - margin.left, d.x*scaling_factor )))>width/2){
-          //     return "start"
-          //   }else{
-          //     return "end"
-          //   };})
-          .text(function(d) {
-            return ""
-          });
+              return "end"
+            };})
+            .text(function(d){
+              if(d.id[2]==":"){
+                if(document.getElementById("hpoLabel").checked &&  d.id in data.nodeLabels){
+                  return data.nodeLabels[d.id];
+                }else{
+                  return d.id;
+                }
+              }else{
+                if(document.getElementById("geneLabel").checked &&  d.id in data.nodeLabels){
+                  return data.nodeLabels[d.id];
+                }else{
+                  return d.id;
+                }
+              }
+            });
 
           // link
           //   .filter(function(d){
@@ -386,7 +384,7 @@ function forceDirected(cluster, selectedNodes) {
   var scaling_factor = 1;
 
   node
-      .filter(function (d) {return document.getElementById("layout-bipartite").checked ? (d.id[2]==":" ? true : false) : true})
+      // .filter(function (d) {return document.getElementById("layout-bipartite").checked ? (d.id[2]==":" ? true : false) : true})
       .call(d3.drag().on("drag", dragged))
 
   node
@@ -400,7 +398,7 @@ function forceDirected(cluster, selectedNodes) {
       link
         .style('opacity',0.01);
       
-      d3.selectAll("tspan").filter(function(n) { return n.id === d.id; }).text( d.id[2]===":" ? d.id : (d.id in data.nodeLabels ? data.nodeLabels[d.id]:""));
+      // d3.selectAll("tspan").filter(function(n) { return n.id === d.id; }).text( d.id[2]===":" ? d.id : (d.id in data.nodeLabels ? data.nodeLabels[d.id]:""));
 
       link
         .filter(function(link_d){return link_d.source.id === d.id || link_d.target.id === d.id;})
@@ -415,11 +413,6 @@ function forceDirected(cluster, selectedNodes) {
         })
     })
     .on('mouseout', function (d) {
-      d3.selectAll("tspan")
-        .filter(function(n) { return n.id === d.id; })
-        .text(function(d) {
-            return ""
-          });
 
       node
         .style('opacity', 1)
@@ -465,7 +458,7 @@ function forceDirected(cluster, selectedNodes) {
       .attr("cy", function(d) {
         d.y = Math.max(margin.top, Math.min(width - margin.top, d.y*scaling_factor )); 
         return Math.max(margin.top, Math.min(width - margin.top, d.y*scaling_factor )); })
-      .attr("r", function(d) {return document.getElementById("layout-bipartite").checked ? 5: (selectedNodes.includes(d.id)? 15:10)})
+      .attr("r", function(d) {return document.getElementById("layout-bipartite").checked ? 5: (selectedNodes.includes(d.id)? 12:8)})
 
     // raise nodes above edges
     node
@@ -483,6 +476,28 @@ function forceDirected(cluster, selectedNodes) {
 
     })};
 
+  function updateLabels(){
+    // update HPO terms
+    svg
+      .selectAll("text")
+      .text(function(d){
+        if(d.id[2]==":"){
+          if(document.getElementById("hpoLabel").checked &&  d.id in data.nodeLabels){
+            return data.nodeLabels[d.id];
+          }else{
+            return d.id;
+          }
+        }else{
+          if(document.getElementById("geneLabel").checked &&  d.id in data.nodeLabels){
+            return data.nodeLabels[d.id];
+          }else{
+            return d.id;
+          }
+        }
+      })
+
+    // update HPO terms
+  };
   ////////////////////////
   // GENES/HP TERM FORM //
   ////////////////////////
@@ -511,9 +526,11 @@ function forceDirected(cluster, selectedNodes) {
     if(cluster==cluster){
       // ENTER CLUSTER NODES
       forceDirected(cluster, selections);
+      updateLabels();
     }else{
       loadAll();
     }
+    
   }
   
   function processSelection(ranking=1) {
@@ -663,7 +680,8 @@ function forceDirected(cluster, selectedNodes) {
   });
 
   document.getElementById("hpoParents").addEventListener('click',function(){processSelection(parseInt(document.getElementById("current-cluster").innerHTML));});
-
+  document.getElementById("hpoLabel").addEventListener('click',function(){updateLabels();});
+  document.getElementById("geneLabel").addEventListener('click',function(){updateLabels();});
 
   document.getElementById("layout-form").addEventListener('click', function (event) {
   if (event.target && event.target.matches("input[type='radio']")) {
