@@ -483,11 +483,21 @@ function forceDirected(cluster, selectedNodes) {
 
   // updating the nodes position during dragging
   function dragged(d) {
-    d.x = d3.event.x, d.y = d3.event.y;
+    d.x =  Math.max(margin.left, Math.min(width - margin.left, d3.event.x));
+    d.y = Math.max(margin.top, Math.min(width - margin.top, d3.event.y));
+
     d3.select(this).attr("cx", d.x*scaling_factor).attr("cy", d.y*scaling_factor);
     link.filter(function(l) { return l.source === d; }).attr("x1", d.x*scaling_factor).attr("y1", d.y*scaling_factor);
     link.filter(function(l) { return l.target === d; }).attr("x2", d.x*scaling_factor).attr("y2", d.y*scaling_factor);
-    labels.filter(function(n) { return n.id === d.id; }).attr("x", 2+d.x*scaling_factor).attr("y",-10+d.y*scaling_factor);
+    labels.filter(function(n) { return n.id === d.id; })
+          .attr("x", 2+d.x*scaling_factor)
+          .attr("y",-10+d.y*scaling_factor)
+          .attr("text-anchor", function(d) {
+            if( (2 + Math.max(margin.left, Math.min(width - margin.left, d.x*scaling_factor )))>width/2){
+              return "start"
+            }else{
+              return "end"
+            };});
     d3.selectAll("tspan").filter(function(n) { return n.id === d.id; }).attr("x", 10+d.x*scaling_factor).attr("y",-2+d.y*scaling_factor);
     node
         .style('opacity', 1)
