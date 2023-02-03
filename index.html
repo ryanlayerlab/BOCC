@@ -53,8 +53,6 @@ BOCC | paper | code | contact
           <label class="form-check-label">HPO radial network</label><br>
           <input type="radio" class="form-check-input" id="layout-bipartite" name="optradio1" value="option2">
           <label class="form-check-label">bipartite network</label><br>
-          <input type="radio" class="form-check-input" id="layout-gene" name="optradio1" value="option2">
-          <label class="form-check-label">expression and LOF</label>
         </div>  
       </div>
       <div class="col-auto">
@@ -68,21 +66,6 @@ BOCC | paper | code | contact
     </div>
   </div>
 </div>
-
-<!-- <table id="cluster-info" class="cluster-info" hidden="hidden" >
-  <tr>
-    <td>
-      <br><br>
-    </td>
-  </tr>
-  <tr>
-    <td>
-      <small><span id="cluster-id"></span></small><br>
-      <small>terms <span id="matching-count"></span>/<span id="total-count"></span></small>
-      <small>| p-value=<span  id="pval"></span></small>
-      <small>| cluster <span id="current-cluster"></span>/<span id="total-clusters"></span></small> 
-    </td>
-</table> -->
 
 <div>
   <div class="container">
@@ -103,7 +86,10 @@ BOCC | paper | code | contact
         <a id="previous" class="previous" hidden="hidden"> &#8249; </a>
       </div>
       <div class="col-auto">
-        <div id="my_dataviz" class="svg-container"></div>
+        <div id="network_viz" class="svg-container"></div>
+      </div>
+      <div class="col-auto">
+        <div id="expression_viz" class="svg-container"></div>
       </div>
       <div class="col"  style="max-width: 2%;">
         <br><br><br><br><br><br><br><br>
@@ -122,20 +108,28 @@ BOCC | paper | code | contact
 
     // set the dimensions and margins of the graph
     var margin = {top: 10, right: 10, bottom: 10, left: 10},
-      width = 800 - margin.left - margin.right,
-      height = 800 - margin.top - margin.bottom;
+      width = 600 - margin.left - margin.right,
+      height = 600 - margin.top - margin.bottom;
 
     let zoom = d3.zoom()
       .scaleExtent([1, 20])
       .translateExtent([[0, 0], [width, height]]);
 
     // append the svg object to the body of the page
-    var svg = d3.select("#my_dataviz")
+    var svg = d3.select("#network_viz")
     .append("svg")
       .attr("width", width + margin.left + margin.right)
       .attr("height", height + margin.top + margin.bottom)
       .append("g")
         .attr("transform","translate(" + margin.left + "," + margin.top + ")")
+
+  // append the svg object to the body of the page
+  var svgE = d3.select("#expression_viz")
+  .append("svg")
+    .attr("width", width + margin.left + margin.right)
+    .attr("height", height + margin.top + margin.bottom)
+    .append("g")
+      .attr("transform","translate(" + margin.left + "," + margin.top + ")")
 
     d3.json("https://sky123martin.github.io/BOCC/network_extended.json", function(err,data){
       console.log(err);
@@ -222,278 +216,285 @@ BOCC | paper | code | contact
   });
 
 
-function geneLayout(cluster, selectedNodes) {
-  svg.selectAll("rect").remove();
-  d3.json("https://raw.githubusercontent.com/sky123martin/BOCC/main/clusters/"+cluster.replace(":",".")+".json", function(clusterdata) {
-    var genes = [];
-    var tissues = [];
-    var gene_tissues = [];
-    var tissue_count = {};
-    
-    clusterdata["nodes"].forEach(function(n){
-        if(n.id[2]!=":" && Object.keys(data["tissueExpression"]).includes(n.id) && Object.keys(data["tissueExpression"][n.id]).includes("specificity")){
-          genes.push(n.id);
-          Object.keys(data["tissueExpression"][n.id]).forEach(function(t){
-                                            t!="specificity" ? tissues.push(t):"";
-                                            if( t!="specificity"){
-                                              gene_tissues.push({"gene":n.id,"tissue":t,"expression":t!="specificity" ? data["tissueExpression"][n.id][t]:20});
-                                            };
-                                            Object.keys(tissue_count).includes(t) ? tissue_count[t] = tissue_count[t]+1 : tissue_count[t]=1;
-                                          });
-          let geneExpression = data["tissueExpression"][n.id];
-          geneExpression["specificity"] =-1;
-          tissues[n.id] = Object.entries(geneExpression).reduce((a, b) => a[1] > b[1] ? a : b)[0];
+  
+  // FORCE DIRECTED LAYOUT
+  function forceDirected(cluster, selectedNodes) {
+  // function geneLayout(cluster, selectedNodes) {
+  
+    svgE.selectAll("rect").remove();
+    svgE.selectAll("line").remove();
+    svgE.selectAll("text").remove();
+    svgE.selectAll("circle").remove();
+  
+    d3.json("https://raw.githubusercontent.com/sky123martin/BOCC/main/clusters/"+cluster.replace(":",".")+".json", function(expressiondata) {
+      d3.json("https://raw.githubusercontent.com/sky123martin/BOCC/main/clusters/"+cluster.replace(":",".")+".json", function(clusterdata) {
+      var genes = [];
+      var tissues = [];
+      var gene_tissues = [];
+      var tissue_count = {};
+      
+      expressiondata["nodes"].forEach(function(n){
+          if(n.id[2]!=":" && Object.keys(data["tissueExpression"]).includes(n.id) && Object.keys(data["tissueExpression"][n.id]).includes("specificity")){
+            genes.push(n.id);
+            Object.keys(data["tissueExpression"][n.id]).forEach(function(t){
+                                              t!="specificity" ? tissues.push(t):"";
+                                              if( t!="specificity"){
+                                                gene_tissues.push({"gene":n.id,"tissue":t,"expression":t!="specificity" ? data["tissueExpression"][n.id][t]:20});
+                                              };
+                                              Object.keys(tissue_count).includes(t) ? tissue_count[t] = tissue_count[t]+1 : tissue_count[t]=1;
+                                            });
+            let geneExpression = data["tissueExpression"][n.id];
+            geneExpression["specificity"] =-1;
+            tissues[n.id] = Object.entries(geneExpression).reduce((a, b) => a[1] > b[1] ? a : b)[0];
+          }else if (n.id[2]!=":"){
+            genes.push(n.id);
+          }
+        });
+  
+      tissues = Array.from(new Set(tissues)).sort();
+  
+      tissues = tissues.sort()
+                    .map(function(d){return ([d, tissue_count[d]])})
+                    .sort((first, second) => { return second[1]-first[1]})
+                    .map(function(d){return d[0]});
+  
+      // tissues.unshift("specificity");
+  
+      var max_expression = -Number.MAX_VALUE
+      var min_expression = Number.MAX_VALUE;
+  
+      gene_tissues.forEach(function(n){
+        max_expression = Math.max(max_expression, n.expression);
+        min_expression = Math.min(min_expression, n.expression);
+      });
+  
+      var maxwidth =  0.4*width/(tissues.length+1);
+      var maxheight =  0.8*height/(genes.length+1);
+  
+      var tissueX = d3.scaleBand()
+                      .domain(tissues)
+                      .range([width*0.2, width*0.6])
+                      .padding(5);
+                      
+      // var tissueColors = d3.scaleOrdinal()
+      //                 .domain(tissues)
+      //                 .range(["lightgrey","#9e0142","#d53e4f","#f46d43","#fdae61","#fee08b","#ffffbf","#e6f598","#abdda4","#66c2a5","#3288bd","#5e4fa2"]);//.sort((a, b) => 0.5 - Math.random()));
+      var expressionOpacity = d3.scaleLinear()
+        .domain([0, max_expression])
+        .range([0,100]);//.sort((a, b) => 0.5 - Math.random()));
+      
+      var max_eo = 1;
+      var min_eo = 0;
+      genes.forEach(function(n){
+        if( !isNaN(data["oeLOF"][n])){
+          max_eo = Math.max(max_eo, data["oeLOF"][n]);
+          min_eo = Math.min(min_eo, data["oeLOF"][n]);
         }
       });
-
-    tissues = Array.from(new Set(tissues)).sort();
-
-    tissues = tissues.sort()
-                  .map(function(d){return ([d, tissue_count[d]])})
-                  .sort((first, second) => { return second[1]-first[1]})
-                  .map(function(d){return d[0]});
-
-    // tissues.unshift("specificity");
-
-    var max_expression = -Number.MAX_VALUE
-    var min_expression = Number.MAX_VALUE;
-
-    gene_tissues.forEach(function(n){
-      max_expression = Math.max(max_expression, n.expression);
-      min_expression = Math.min(min_expression, n.expression);
-    });
-
-    var maxwidth =  0.4*width/(tissues.length+1);
-    var maxheight =  0.8*height/(genes.length+1);
-
-    var tissueX = d3.scaleBand()
-                    .domain(tissues)
-                    .range([width*0.2, width*0.6])
+      console.log(min_eo,max_eo);
+  
+      var eoScale = d3.scaleLinear()
+          .domain([0, max_eo])
+          .range([0.125*width, 0.2*width]);
+  
+      genes = genes.sort()
+                    .map(function(d){return (Object.keys(data["oeLOF"]).includes(d) ? [d, data["oeLOF"][d]] : [d, Number.MAX_VALUE])})
+                    .sort((first, second) => { return first[1] - second[1]})
+                    .map(function(d){return d[0]});
+      
+      var geneY = d3.scaleBand()
+                    .domain(genes)
+                    .range([height*0.1, height*0.9])
                     .padding(5);
-                    
-    // var tissueColors = d3.scaleOrdinal()
-    //                 .domain(tissues)
-    //                 .range(["lightgrey","#9e0142","#d53e4f","#f46d43","#fdae61","#fee08b","#ffffbf","#e6f598","#abdda4","#66c2a5","#3288bd","#5e4fa2"]);//.sort((a, b) => 0.5 - Math.random()));
-    var expressionOpacity = d3.scaleLinear()
-      .domain([0, max_expression])
-      .range([0,100]);//.sort((a, b) => 0.5 - Math.random()));
-    
-    var max_eo = 1;
-    var min_eo = 0;
-    genes.forEach(function(n){
-      if( !isNaN(data["oeLOF"][n])){
-        max_eo = Math.max(max_eo, data["oeLOF"][n]);
-        min_eo = Math.min(min_eo, data["oeLOF"][n]);
-      }
-    });
-    console.log(min_eo,max_eo);
-
-    var eoScale = d3.scaleLinear()
-        .domain([0, max_eo])
-        .range([0.125*width, 0.2*width]);
-
-    genes = genes.sort()
-                  .map(function(d){return (Object.keys(data["oeLOF"]).includes(d) ? [d, data["oeLOF"][d]] : [d, Number.MAX_VALUE])})
-                  .sort((first, second) => { return first[1] - second[1]})
-                  .map(function(d){return d[0]});
-    
-    var geneY = d3.scaleBand()
-                  .domain(genes)
-                  .range([height*0.1, height*0.9])
-                  .padding(5);
-    
-    var geneLabels = svg.selectAll("genetext")
-                    .data(genes)
-                    .enter()
-                    .append("text")
-                      .attr("id", function(d) { return d;})
-                      .attr("x", function(d) { return width*0.1; })
-                      .attr("y", function(d) { return geneY(d); })
-                      .text(function(d) { return d;})
-                      .attr("class","gene-labels")
-                      .attr("text-anchor","end")
-
-    var opacityScale = d3.scaleLinear()
-                    .domain([min_expression, max_expression])
-                    .range([0, 100]);
-
-    var expressionNodes = svg.selectAll("rect")
-                    .data(gene_tissues)
-                    .enter()
-                    .append("rect")
-                      .attr("id", function (d) { return d.gene+"_"+d.tissue; } )
-                      .attr("opacity", function (d) {return  expressionOpacity(d.expression);})
-                      .attr("x", function (d) {return tissueX(d.tissue)-maxwidth/2;})
-                      .attr("y", function (d) {return geneY(d.gene)-maxheight/2;})
-                      .attr("width", maxwidth)
-                      .attr("height", maxheight)
-                      .attr("fill", "#036666");
-  // Lines
-  var horzLine = svg.selectAll("lines")
-              .data(genes)
-              .enter()
-              .append("line")
-                .attr("x1", tissueX(tissues[0])-maxwidth/2)
-                .attr("x2", tissueX(tissues[tissues.length-1])+maxwidth/2)
-                .attr("y1", function(d) { return geneY(d)-maxheight/2; })
-                .attr("y2", function(d) { return geneY(d)-maxheight/2; })
-                .attr("stroke", "white");
-
-  var vertLine = svg.selectAll("lines")
+      
+      var geneLabels = svgE.selectAll("genetext")
+                      .data(genes)
+                      .enter()
+                      .append("text")
+                        .attr("id", function(d) { return d;})
+                        .attr("x", function(d) { return width*0.1; })
+                        .attr("y", function(d) { return geneY(d); })
+                        .text(function(d) { return d;})
+                        .attr("class","gene-labels")
+                        .attr("text-anchor","end")
+  
+      var opacityScale = d3.scaleLinear()
+                      .domain([min_expression, max_expression])
+                      .range([0, 100]);
+  
+      var expressionNodes = svgE.selectAll("rect")
+                      .data(gene_tissues)
+                      .enter()
+                      .append("rect")
+                        .attr("id", function (d) { return d.gene+"_"+d.tissue; } )
+                        .attr("opacity", function (d) {return  expressionOpacity(d.expression);})
+                        .attr("x", function (d) {return tissueX(d.tissue)-maxwidth/2;})
+                        .attr("y", function (d) {return geneY(d.gene)-maxheight/2;})
+                        .attr("width", maxwidth)
+                        .attr("height", maxheight)
+                        .attr("fill", "#036666");
+    // Lines
+    var horzLine = svgE.selectAll("lines")
+                .data(genes)
+                .enter()
+                .append("line")
+                  .attr("x1", tissueX(tissues[0])-maxwidth/2)
+                  .attr("x2", tissueX(tissues[tissues.length-1])+maxwidth/2)
+                  .attr("y1", function(d) { return geneY(d)-maxheight/2; })
+                  .attr("y2", function(d) { return geneY(d)-maxheight/2; })
+                  .attr("stroke", "white");
+  
+    var vertLine = svgE.selectAll("lines")
+                .data(tissues)
+                .enter()
+                .append("line")
+                  .attr("y1", geneY(genes[0])-maxheight/2)
+                  .attr("y2", geneY(genes[genes.length-1])+maxheight/2)
+                  .attr("x1", function(d) { return tissueX(d)-maxwidth/2; })
+                  .attr("x2", function(d) { return tissueX(d)-maxwidth/2; })
+                  .attr("stroke", "white");
+    // Lines
+    var lofLines = svgE.selectAll("lines")
+        .data(genes)
+        .enter()
+        .append("line")
+          .attr("x1", 0.125*width)
+          .attr("x2", 0.2*width)
+          .attr("y1", function(d) { return geneY(d); })
+          .attr("y2", function(d) { return geneY(d); })
+          .attr("stroke", "lightgrey");
+  
+    // Lines
+    var lofZeroTick = svgE.selectAll("zerolines")
+        .data(genes)
+        .enter()
+        .append("line")
+          .attr("x1", eoScale(0))
+          .attr("x2", eoScale(0))
+          .attr("y1", function(d) { return geneY(d)-height*0.005; })
+          .attr("y2", function(d) { return geneY(d)+height*0.005; })
+          .attr("stroke", "lightgrey");
+  
+    var lofOneTick = svgE.selectAll("onelines")
+        .data(genes)
+        .enter()
+        .append("line")
+          .attr("x1", eoScale(1))
+          .attr("x2", eoScale(1))
+          .attr("y1", function(d) { return geneY(d)-height*0.005; })
+          .attr("y2", function(d) { return geneY(d)+height*0.005; })
+          .attr("stroke", "lightgrey");
+  
+      // Lines
+      var tissueLabels = svgE.selectAll("tissuetext")
               .data(tissues)
               .enter()
-              .append("line")
-                .attr("y1", geneY(genes[0])-maxheight/2)
-                .attr("y2", geneY(genes[genes.length-1])+maxheight/2)
-                .attr("x1", function(d) { return tissueX(d)-maxwidth/2; })
-                .attr("x2", function(d) { return tissueX(d)-maxwidth/2; })
-                .attr("stroke", "white");
-  // Lines
-  var lofLines = svg.selectAll("lines")
-      .data(genes)
-      .enter()
-      .append("line")
-        .attr("x1", 0.125*width)
-        .attr("x2", 0.2*width)
-        .attr("y1", function(d) { return geneY(d); })
-        .attr("y2", function(d) { return geneY(d); })
-        .attr("stroke", "lightgrey");
-
-  // Lines
-  var lofZeroTick = svg.selectAll("zerolines")
-      .data(genes)
-      .enter()
-      .append("line")
-        .attr("x1", eoScale(0))
-        .attr("x2", eoScale(0))
-        .attr("y1", function(d) { return geneY(d)-height*0.005; })
-        .attr("y2", function(d) { return geneY(d)+height*0.005; })
-        .attr("stroke", "lightgrey");
-
-  var lofOneTick = svg.selectAll("onelines")
-      .data(genes)
-      .enter()
-      .append("line")
-        .attr("x1", eoScale(1))
-        .attr("x2", eoScale(1))
-        .attr("y1", function(d) { return geneY(d)-height*0.005; })
-        .attr("y2", function(d) { return geneY(d)+height*0.005; })
-        .attr("stroke", "lightgrey");
-
-    // Lines
-    var tissueLabels = svg.selectAll("tissuetext")
-            .data(tissues)
-            .enter()
-            .append("text")
-              .attr("id", function(d) { return d;})
-              .attr("y", function(d) { return height*0.895;})
-              .attr("x", function(d) { return (tissueX(d)-maxwidth*0.3);})
-              .text(function(d) { return d; })
-              .attr("text-anchor","start")
-              .attr("class","gene-labels")
-              .attr("transform", function(d) { return "rotate(90,"+(tissueX(d)-maxwidth*0.3) +"," + (height*0.895) + ")"; });
-
-    svg.append("text")
-      .text(0)
-      .attr("y", geneY(genes[0])-height*0.015)
-      .attr("x", eoScale(0))
-      .attr("text-anchor","middle")
-      .attr("class","eo-labels");
-
-    svg.append("text")
-      .text(1)
-      .attr("y", geneY(genes[0])-height*0.015)
-      .attr("x", eoScale(1))
-      .attr("text-anchor","middle")
-      .attr("class","eo-labels");
-      
-    svg.append("text")
-      .text("observed/expected SNV pLOF")
-      .attr("y", geneY(genes[0])-height*0.03)
-      .attr("x", (eoScale(max_eo)-eoScale(min_eo))/2+eoScale(min_eo))
-      .attr("text-anchor","middle")
-      .attr("class","eo-labels");
-
-    var eoCircles = svg.selectAll("EOcircle")
-      .data(gene_tissues)
-      .enter()
-      .append("circle")
-          .attr("id", function (d) { return d.gene; } )
-          .attr("stroke", "white")
-          .attr("stroke-width", 1)
-          .attr("cx", function (d) {
-            if (!isNaN(data["oeLOF"][d.gene])){
-              return eoScale(data["oeLOF"][d.gene]);
-            }else{
-              return -100;
-            }})
-          .attr("cy", function (d) {return geneY(d.gene);})
-          .attr("r", 3)
-          .attr("fill", "#036666");
-    // expressionNodes.raise();
-    eoCircles.raise();
-
-    geneLabels
-      .on("mouseover",function(d) { 
-        tissueLabels
-              .attr("opacity",0.2);
-        geneLabels
-              .filter(function (g) {return g!=d;})
-              .attr("opacity",0.2);
-        expressionNodes
-              .attr("fill", "lightgrey");
-        expressionNodes
-          .filter(function (g) {return g.gene==d;})
-          .attr("fill", function(g){
-            tissueLabels
-              .filter(function (t) {return g.tissue==t;})
-              .attr("opacity",1);
-
-            return "#036666";
-          });
-      })
-      .on("mouseout",function(d) { 
-        expressionNodes
-          .attr("fill", "#036666");
-        tissueLabels
-          .attr("opacity",1);
-        geneLabels
-          .attr("opacity",1);
-      });
-
-  tissueLabels
-      .on("mouseover",function(d) { 
-        tissueLabels
-              .filter(function (g) {return g!=d;})
-              .attr("opacity",0.2);
-        geneLabels
-              .attr("opacity",0.2);
-        expressionNodes
-              .attr("fill", "lightgrey");
-        expressionNodes
-          .filter(function (g) {return g.tissue==d;})
-          .attr("fill", function(g){
-            geneLabels
-              .filter(function (t) {return g.gene==t;})
-              .attr("opacity",1);
-
-            return "#036666";
-          });
-      })
-      .on("mouseout",function(d) { 
-        expressionNodes
-          .attr("fill", "#036666");
-        tissueLabels
-          .attr("opacity",1);
-        geneLabels
-          .attr("opacity",1);
-      });
-  })
-};
-
-// FORCE DIRECTED LAYOUT
-function forceDirected(cluster, selectedNodes) {
-  d3.json("https://raw.githubusercontent.com/sky123martin/BOCC/main/clusters/"+cluster.replace(":",".")+".json", function(clusterdata) {
+              .append("text")
+                .attr("id", function(d) { return d;})
+                .attr("y", function(d) { return height*0.895;})
+                .attr("x", function(d) { return (tissueX(d)-maxwidth*0.3);})
+                .text(function(d) { return d; })
+                .attr("text-anchor","start")
+                .attr("class","gene-labels")
+                .attr("transform", function(d) { return "rotate(90,"+(tissueX(d)-maxwidth*0.3) +"," + (height*0.895) + ")"; });
+  
+      svgE.append("text")
+        .text(0)
+        .attr("y", geneY(genes[0])-height*0.015)
+        .attr("x", eoScale(0))
+        .attr("text-anchor","middle")
+        .attr("class","eo-labels");
+  
+      svgE.append("text")
+        .text(1)
+        .attr("y", geneY(genes[0])-height*0.015)
+        .attr("x", eoScale(1))
+        .attr("text-anchor","middle")
+        .attr("class","eo-labels");
+        
+      svgE.append("text")
+        .text("observed/expected SNV pLOF")
+        .attr("y", geneY(genes[0])-height*0.03)
+        .attr("x", (eoScale(max_eo)-eoScale(min_eo))/2+eoScale(min_eo))
+        .attr("text-anchor","middle")
+        .attr("class","eo-labels");
+  
+      var eoCircles = svgE.selectAll("EOcircle")
+        .data(gene_tissues)
+        .enter()
+        .append("circle")
+            .attr("id", function (d) { return d.gene; } )
+            .attr("stroke", "white")
+            .attr("stroke-width", 1)
+            .attr("cx", function (d) {
+              console.log(d.gene,data["oeLOF"][d.gene]);
+              if (!isNaN(data["oeLOF"][d.gene])){
+                return eoScale(data["oeLOF"][d.gene]);
+              }else{
+                return -100;
+              }})
+            .attr("cy", function (d) {return geneY(d.gene);})
+            .attr("r", 3)
+            .attr("fill", "#036666");
+      // expressionNodes.raise();
+      eoCircles.raise();
+  
+      geneLabels
+        .on("mouseover",function(d) { 
+          tissueLabels
+                .attr("opacity",0.2);
+          geneLabels
+                .filter(function (g) {return g!=d;})
+                .attr("opacity",0.2);
+          expressionNodes
+                .attr("fill", "lightgrey");
+          expressionNodes
+            .filter(function (g) {return g.gene==d;})
+            .attr("fill", function(g){
+              tissueLabels
+                .filter(function (t) {return g.tissue==t;})
+                .attr("opacity",1);
+  
+              return "#036666";
+            });
+        })
+        .on("mouseout",function(d) { 
+          expressionNodes
+            .attr("fill", "#036666");
+          tissueLabels
+            .attr("opacity",1);
+          geneLabels
+            .attr("opacity",1);
+        });
+  
+    tissueLabels
+        .on("mouseover",function(d) { 
+          tissueLabels
+                .filter(function (g) {return g!=d;})
+                .attr("opacity",0.2);
+          geneLabels
+                .attr("opacity",0.2);
+          expressionNodes
+                .attr("fill", "lightgrey");
+          expressionNodes
+            .filter(function (g) {return g.tissue==d;})
+            .attr("fill", function(g){
+              geneLabels
+                .filter(function (t) {return g.gene==t;})
+                .attr("opacity",1);
+  
+              return "#036666";
+            });
+        })
+        .on("mouseout",function(d) { 
+          expressionNodes
+            .attr("fill", "#036666");
+          tissueLabels
+            .attr("opacity",1);
+          geneLabels
+            .attr("opacity",1);
+        });
+  // };
 
   var edges = clusterdata["edges"];
   var nodes = clusterdata["nodes"];
@@ -697,6 +698,27 @@ function forceDirected(cluster, selectedNodes) {
     .on('mouseover', function (d) {
       // Highlight the nodes: every node is green except of him
       // Highlight the connections
+
+      if (d.id[2]!=":"){
+        geneLabels
+          tissueLabels
+                .attr("opacity", 0.2);
+          geneLabels
+                .filter(function (g) {return g!=d.id;})
+                .attr("opacity",0.2);
+          expressionNodes
+                .attr("fill", "lightgrey");
+          expressionNodes
+            .filter(function (g) {return g.gene==d.id;})
+            .attr("fill", function(g){
+              tissueLabels
+                .filter(function (t) {return g.tissue==t;})
+                .attr("opacity",1);
+  
+              return "#036666";
+            });
+
+      }
       node
         .style('opacity',0.1);
       labels
@@ -719,6 +741,13 @@ function forceDirected(cluster, selectedNodes) {
         })
     })
     .on('mouseout', function (d) {
+
+      expressionNodes
+        .attr("fill", "#036666");
+      tissueLabels
+        .attr("opacity",1);
+      geneLabels
+        .attr("opacity",1);
 
       node
         .style('opacity', 1)
@@ -795,7 +824,7 @@ function forceDirected(cluster, selectedNodes) {
     };
 
 
-    })};
+  })})};
 
   function updateColors(){
     if(true){
@@ -857,20 +886,16 @@ function forceDirected(cluster, selectedNodes) {
               
     svg.selectAll("line").remove();
     svg.selectAll("text").remove();
-    
-    // remove all nodes
     svg.selectAll("circle")
       // .filter(function(d){return cluster!=d.cluster;})
       .remove();
     
     if(cluster==cluster){
       // ENTER CLUSTER NODES
-      if(document.getElementById("layout-gene").checked!=true){
-        forceDirected(cluster, selections);
-        updateLabels();
-      }else{
-        geneLayout(cluster, selections);
-      }
+
+      // geneLayout(cluster, selections);
+      forceDirected(cluster, selections);
+      updateLabels();
     }else{
       loadAll();
     }
@@ -957,6 +982,10 @@ function forceDirected(cluster, selectedNodes) {
     svg.selectAll("line").remove();
     svg.selectAll("text").remove();
     svg.selectAll("circle").remove();
+    svgE.selectAll("line").remove();
+    svgE.selectAll("text").remove();
+    svgE.selectAll("circle").remove();
+    svgE.selectAll("rect").remove();
     document.getElementById("cluster-info").hidden = "hidden";
     loadAll();
   }
