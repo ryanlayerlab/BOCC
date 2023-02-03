@@ -205,9 +205,9 @@ BOCC | paper | code | contact
             .attr("r", 1)
             .attr("fill", function(d) { 
               if (d.id[2]==":"){
-                return "#27476E";
+                return "darkgrey";
               }else{
-                return "#81ADC8";
+                return "#059fa0";
               };});
 
     //return processSelection(ranking = 1,selections = ['BRCA1']);
@@ -596,7 +596,7 @@ function forceDirected(cluster, selectedNodes) {
               if (d.id[2]==":"){
                 return "#27476E";
               }else{
-                return "#81ADC8";
+                return "#059fa0";
               };});
 
   // initialize the labels
@@ -765,7 +765,7 @@ function forceDirected(cluster, selectedNodes) {
         if (d.id[2]==":"){
           return cScale(parseInt(data.hpoDepth[d.id]));
         }else{
-          return "#036666";
+          return "#059fa0";
           // if (!Object.keys(tissues).includes(d.id)){
           //   return "light blue";
           // }else{
