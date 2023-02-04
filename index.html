@@ -986,6 +986,8 @@ BOCC | paper | code | contact
     svgE.selectAll("text").remove();
     svgE.selectAll("circle").remove();
     svgE.selectAll("rect").remove();
+    document.getElementById("previous").hidden = "hidden";
+    document.getElementById("next").hidden = "hidden";
     document.getElementById("cluster-info").hidden = "hidden";
     loadAll();
   }
