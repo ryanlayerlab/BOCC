@@ -226,14 +226,14 @@ BOCC | paper | code | contact
     svgE.selectAll("text").remove();
     svgE.selectAll("circle").remove();
   
-    d3.json("https://raw.githubusercontent.com/sky123martin/BOCC/main/clusters_2022/"+cluster.replace(":",".")+".json", function(expressiondata) {
+    d3.json("https://raw.githubusercontent.com/sky123martin/BOCC/main/clusters_2022/"+cluster.replace(":",".")+".json", function(clusterdata) {
       d3.json("https://raw.githubusercontent.com/sky123martin/BOCC/main/clusters_2022/"+cluster.replace(":",".")+".json", function(clusterdata) {
       var genes = [];
       var tissues = [];
       var gene_tissues = [];
       var tissue_count = {};
       
-      expressiondata["nodes"].forEach(function(n){
+      clusterdata["nodes"].forEach(function(n){
           if(n.id[2]!=":" && Object.keys(data["tissueExpression"]).includes(n.id) && Object.keys(data["tissueExpression"][n.id]).includes("specificity")){
             genes.push(n.id);
             Object.keys(data["tissueExpression"][n.id]).forEach(function(t){
@@ -684,47 +684,39 @@ BOCC | paper | code | contact
             });
         labels
           .raise();
-        return form.enable(); // enable form
-      });
-  
-  // network scaling factor
-  var scaling_factor = 1;
+        // return form.enable(); // enable form
 
-  node
-      // .filter(function (d) {return document.getElementById("layout-bipartite").checked ? (d.id[2]==":" ? true : false) : true})
-      .call(d3.drag().on("drag", dragged))
+          node
+          .on('mouseover', function (d) {
+            // Highlight the nodes: every node is green except of him
+            // Highlight the connections
 
-  node
-    .on('mouseover', function (d) {
-      // Highlight the nodes: every node is green except of him
-      // Highlight the connections
+            if (d.id[2]!=":"){
+              geneLabels
+                tissueLabels
+                      .attr("opacity", 0.2);
+                geneLabels
+                      .filter(function (g) {return g!=d.id;})
+                      .attr("opacity",0.2);
+                expressionNodes
+                      .attr("fill", "lightgrey");
+                expressionNodes
+                  .filter(function (g) {return g.gene==d.id;})
+                  .attr("fill", function(g){
+                    tissueLabels
+                      .filter(function (t) {return g.tissue==t;})
+                      .attr("opacity",1);
+        
+                    return "#036666";
+                  });
 
-      if (d.id[2]!=":"){
-        geneLabels
-          tissueLabels
-                .attr("opacity", 0.2);
-          geneLabels
-                .filter(function (g) {return g!=d.id;})
-                .attr("opacity",0.2);
-          expressionNodes
-                .attr("fill", "lightgrey");
-          expressionNodes
-            .filter(function (g) {return g.gene==d.id;})
-            .attr("fill", function(g){
-              tissueLabels
-                .filter(function (t) {return g.tissue==t;})
-                .attr("opacity",1);
-  
-              return "#036666";
-            });
-
-      }
-      node
-        .style('opacity',0.1);
-      labels
-        .style('opacity',0.03);
-      link
-        .style('opacity',0.0);
+            }
+        node
+          .style('opacity',0.1);
+        labels
+          .style('opacity',0.03);
+        link
+          .style('opacity',0.0);
       
       // d3.selectAll("tspan").filter(function(n) { return n.id === d.id; }).text( d.id[2]===":" ? d.id : (d.id in data.nodeLabels ? data.nodeLabels[d.id]:""));
 
@@ -756,6 +748,16 @@ BOCC | paper | code | contact
       labels
         .style('opacity',  0.6)
     });
+
+      });
+  
+  // network scaling factor
+  var scaling_factor = 1;
+
+  node
+      // .filter(function (d) {return document.getElementById("layout-bipartite").checked ? (d.id[2]==":" ? true : false) : true})
+      .call(d3.drag().on("drag", dragged))
+
 
   // updating the nodes position during dragging
   function dragged(d) {

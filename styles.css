@@ -34,6 +34,19 @@ tspan {
   color:#0b0b0b;
 }
 
+.gene-labels {
+  font-family: Verdana;
+  font-size: 10px;
+  color:#343434;
+  font-weight: normal;
+}
+
+.eo-labels {
+  font-family: Verdana;
+  font-size: 7px;
+  color:#989898;
+  font-weight: normal;
+}
 .cluster-info {
   color:#7e7e7e;
   font-size: 15px;
