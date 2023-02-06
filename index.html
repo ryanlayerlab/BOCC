@@ -247,6 +247,7 @@ BOCC | paper | code | contact
             geneExpression["specificity"] =-1;
             tissues[n.id] = Object.entries(geneExpression).reduce((a, b) => a[1] > b[1] ? a : b)[0];
           }else if (n.id[2]!=":"){
+            console.log(n.id);
             genes.push(n.id);
           }
         });
@@ -420,20 +421,20 @@ BOCC | paper | code | contact
         .attr("class","eo-labels");
   
       var eoCircles = svgE.selectAll("EOcircle")
-        .data(gene_tissues)
+        .data(genes)
         .enter()
         .append("circle")
-            .attr("id", function (d) { return d.gene; } )
+            .attr("id", function (d) { return d; } )
             .attr("stroke", "white")
             .attr("stroke-width", 1)
             .attr("cx", function (d) {
-              console.log(d.gene,data["oeLOF"][d.gene]);
-              if (!isNaN(data["oeLOF"][d.gene])){
-                return eoScale(data["oeLOF"][d.gene]);
+              console.log(d, data["oeLOF"][d]);
+              if (!isNaN(data["oeLOF"][d])){
+                return eoScale(data["oeLOF"][d]);
               }else{
                 return -100;
               }})
-            .attr("cy", function (d) {return geneY(d.gene);})
+            .attr("cy", function (d) {return geneY(d);})
             .attr("r", 3)
             .attr("fill", "#036666");
       // expressionNodes.raise();
