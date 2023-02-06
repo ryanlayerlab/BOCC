@@ -131,7 +131,7 @@ BOCC | paper | code | contact
     .append("g")
       .attr("transform","translate(" + margin.left + "," + margin.top + ")")
 
-    d3.json("https://sky123martin.github.io/BOCC/network_extended.json", function(err,data){
+    d3.json("https://sky123martin.github.io/BOCC/network_2022.json", function(err,data){
       console.log(err);
         // append the svg object to the body of the page
       min_x = Number.MAX_VALUE,
@@ -226,8 +226,8 @@ BOCC | paper | code | contact
     svgE.selectAll("text").remove();
     svgE.selectAll("circle").remove();
   
-    d3.json("https://raw.githubusercontent.com/sky123martin/BOCC/main/clusters/"+cluster.replace(":",".")+".json", function(expressiondata) {
-      d3.json("https://raw.githubusercontent.com/sky123martin/BOCC/main/clusters/"+cluster.replace(":",".")+".json", function(clusterdata) {
+    d3.json("https://raw.githubusercontent.com/sky123martin/BOCC/main/clusters_2022/"+cluster.replace(":",".")+".json", function(expressiondata) {
+      d3.json("https://raw.githubusercontent.com/sky123martin/BOCC/main/clusters_2022/"+cluster.replace(":",".")+".json", function(clusterdata) {
       var genes = [];
       var tissues = [];
       var gene_tissues = [];
@@ -992,28 +992,18 @@ BOCC | paper | code | contact
     loadAll();
   }
   };
-  
-  function updateSelectize(){
-    var selectedOptions = Array.from(form.items);
-    var optionsArray = [];
-    data.genes.forEach(function(o){if(!selectedOptions.includes(o)){optionsArray.push({name:o, value:o, group:"gene"})}});
-    data.diseases.forEach(function(o){if(!selectedOptions.includes(o)){optionsArray.push({name:o, value:o, group:"HP"})}});
-    data.clusters.forEach(function(o){if(!selectedOptions.includes(o)){optionsArray.push({name:o, value:o, group:"cluster"})}});
-    form.clearOptions();
-    optionsArray.forEach(function(o){form.addOption(o)})
-  }
 
   function buildSelectize(){
     var optionsArray = [];
     
-    data.genes.forEach(function(o){optionsArray.push({name:o, value:o, group:"gene"})});
-    data.diseases.forEach(function(o){optionsArray.push({name:o, value:o, group:"HP"})});
+    data.genes.forEach(function(o){optionsArray.push({name:o + (o in data.nodeLabels ? " - " + data.nodeLabels[o]: ""), value:o, group:"gene"})});
+    data.diseases.forEach(function(o){optionsArray.push({name:o + (o in data.nodeLabels ? " - " + data.nodeLabels[o]: ""), value:o, group:"HP"})});
     data.clusters.forEach(function(o){optionsArray.push({name:o, value:o, group:"cluster"})});
 
     $form = $("#select-node")
                 .selectize({
-                      valueField: 'name',
-                      labelField: 'value',
+                      valueField: 'value',
+                      labelField: 'name',
                       searchField: ['name'],
                       options: optionsArray,
                       optgroups:[
@@ -1024,10 +1014,11 @@ BOCC | paper | code | contact
                       optgroupField: 'group',
                       delimiter:',',
                       create: false,
+                      hideSelected: true,
                       sortField: "text",
                       maxItems: 20,
                       text:true,
-                      onChange: function (){updateSelectize();},
+                      // onChange: function (){updateSelectize();},
                       onDropdownClose: function (){processSelection(1);}
                   });
 
