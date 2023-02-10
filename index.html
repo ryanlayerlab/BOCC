@@ -68,7 +68,7 @@ BOCC | paper | code | contact
 </div>
 
 <div>
-  <div class="container">
+  <div class="container" style="overflow-x: scroll;">
     <div class="row cluster-info" id="cluster-info" hidden>
         <div class="col" style="max-width: 2%;"></div>
         <div class="col" style="max-width: 80%;">
@@ -80,9 +80,10 @@ BOCC | paper | code | contact
 
         <div class="col" style="max-width: 2%;"></div>
       </div>
-    <div class="row" >
-      <div class="col" style="max-width: 2%;">
-        <br><br><br><br><br><br><br><br>
+
+    <div class="row">
+      <div class="col-auto">
+        <!-- <br><br><br><br><br><br><br><br> -->
         <a id="previous" class="previous" hidden="hidden"> &#8249; </a>
       </div>
       <div class="col-auto">
@@ -91,16 +92,34 @@ BOCC | paper | code | contact
       <div class="col-auto">
         <div id="expression_viz" class="svg-container"></div>
       </div>
-      <div class="col"  style="max-width: 2%;">
-        <br><br><br><br><br><br><br><br>
+      <div class="col-auto">
+        <!-- <br><br><br><br><br><br><br><br> -->
         <a id="next" class="next" hidden="hidden">&#8250;</a>
       </div>
     </div>
   </div>
-</div>
 
-
-
+<!-- 
+<div id="vizcontainer">
+  <div class="table">
+      <div class="tr">
+          <div class="td">
+            <br><br><br><br><br><br><br><br>
+            <a id="previous" class="previous" hidden="hidden"> &#8249; </a>
+          </div> 
+          <div class="td">
+            <div id="network_viz" class="svg-container"></div>
+          </div> 
+          <div class="td">
+            <div id="expression_viz" class="svg-container"></div>
+          </div>
+          <div class="td">
+            <br><br><br><br><br><br><br><br>
+            <a id="next" class="next" hidden="hidden">&#8250;</a>
+        </div> 
+      </div>
+  </div>
+</div>  -->
 
 </body>
 <script>
@@ -204,7 +223,7 @@ BOCC | paper | code | contact
                 return "#059fa0";
               };});
 
-    //return processSelection(ranking = 1,selections = ['BRCA1']);
+    return processSelection(ranking = 1,selections = ['BRCA1']);
     // displayCluster({"cluster": 'paris.cesna.2021:12792', "HPO count": 0, "gene count": 1, "count": 1, "pval": 0.005847958382219},['BRCA1']);
     // displayCluster({"cluster": 'paris.walktrap.2021:1015', "HPO count": 0, "gene count": 1, "count": 1, "pval": 0.009},['A2M']);
     
@@ -277,13 +296,11 @@ BOCC | paper | code | contact
                       .range([width*0.2, width*0.6])
                       .padding(5);
                       
-      // var tissueColors = d3.scaleOrdinal()
-      //                 .domain(tissues)
-      //                 .range(["lightgrey","#9e0142","#d53e4f","#f46d43","#fdae61","#fee08b","#ffffbf","#e6f598","#abdda4","#66c2a5","#3288bd","#5e4fa2"]);//.sort((a, b) => 0.5 - Math.random()));
-      var expressionOpacity = d3.scaleLinear()
+      var expressionC = d3.scaleLinear()
         .domain([0, max_expression])
-        .range([0,100]);//.sort((a, b) => 0.5 - Math.random()));
+        .range(["white","#036666"]);//.sort((a, b) => 0.5 - Math.random()));
       
+
       var max_eo = 1;
       var min_eo = 0;
       genes.forEach(function(n){
@@ -317,7 +334,7 @@ BOCC | paper | code | contact
                         .attr("y", function(d) { return geneY(d); })
                         .text(function(d) { return d;})
                         .attr("class","gene-labels")
-                        .attr("text-anchor","end")
+                        .attr("text-anchor","end");
   
       var opacityScale = d3.scaleLinear()
                       .domain([min_expression, max_expression])
@@ -328,12 +345,24 @@ BOCC | paper | code | contact
                       .enter()
                       .append("rect")
                         .attr("id", function (d) { return d.gene+"_"+d.tissue; } )
-                        .attr("opacity", function (d) {return  expressionOpacity(d.expression);})
+                        .attr("fill", function (d) {return  expressionC(d.expression);})
                         .attr("x", function (d) {return tissueX(d.tissue)-maxwidth/2;})
                         .attr("y", function (d) {return geneY(d.gene)-maxheight/2;})
                         .attr("width", maxwidth)
-                        .attr("height", maxheight)
-                        .attr("fill", "#036666");
+                        .attr("height", maxheight);
+
+      var expressionText = svgE.selectAll("texts")
+                      .data(gene_tissues)
+                      .enter()
+                      .append("text")
+                        .attr("id", function (d) { return d.gene+"_"+d.tissue+"_text"; } )
+                        .attr("fill", "lightgrey")
+                        .attr("opacity", 0)
+                        .attr("font-size",6)
+                        .attr("x", function (d) {return tissueX(d.tissue)-maxwidth/2;})
+                        .attr("y", function (d) {return geneY(d.gene)-maxheight/2;})
+                        .text( function (d) {return d.expression;})
+                        .attr("text-anchor","start");
     // Lines
     var horzLine = svgE.selectAll("lines")
                 .data(genes)
@@ -414,12 +443,28 @@ BOCC | paper | code | contact
         .attr("class","eo-labels");
         
       svgE.append("text")
-        .text("observed/expected SNV pLOF")
+        .text("Gnomad - SNV pLOF")// SNV pLOF")
+        .attr("y", geneY(genes[0])-height*0.03)
+        .attr("x", (eoScale(max_eo)-eoScale(min_eo))/2+eoScale(min_eo)-10)
+        .attr("transform", function(d) { return "rotate(-45,"+((eoScale(max_eo)-eoScale(min_eo))/2+eoScale(min_eo)-10) +"," + (geneY(genes[0])-height*0.03) + ")"; })
+        .attr("text-anchor","left")
+        .attr("class","eo-labels");
+
+      svgE.append("text")
+        .text("(observed/expected)")
         .attr("y", geneY(genes[0])-height*0.03)
         .attr("x", (eoScale(max_eo)-eoScale(min_eo))/2+eoScale(min_eo))
-        .attr("text-anchor","middle")
+        .attr("transform", function(d) { return "rotate(-45,"+((eoScale(max_eo)-eoScale(min_eo))/2+eoScale(min_eo)) +"," + (geneY(genes[0])-height*0.03) + ")"; })
+        .attr("text-anchor","left")
         .attr("class","eo-labels");
-  
+
+      svgE.append("text")
+      .text("Protein Atlas - Tissue Specificity (nTPM)")
+      .attr("y", geneY(genes[0])-height*0.03)
+      .attr("x", tissueX(tissues[Math.round(tissues.length/2)]))
+      .attr("text-anchor","middle")
+      .attr("class","eo-labels");
+
       var eoCircles = svgE.selectAll("EOcircle")
         .data(genes)
         .enter()
@@ -428,7 +473,6 @@ BOCC | paper | code | contact
             .attr("stroke", "white")
             .attr("stroke-width", 1)
             .attr("cx", function (d) {
-              console.log(d, data["oeLOF"][d]);
               if (!isNaN(data["oeLOF"][d])){
                 return eoScale(data["oeLOF"][d]);
               }else{
@@ -439,29 +483,12 @@ BOCC | paper | code | contact
             .attr("fill", "#036666");
       // expressionNodes.raise();
       eoCircles.raise();
+      expressionText.raise();
   
       geneLabels
-        .on("mouseover",function(d) { 
-          tissueLabels
-                .attr("opacity",0.2);
-          geneLabels
-                .filter(function (g) {return g!=d;})
-                .attr("opacity",0.2);
-          expressionNodes
-                .attr("fill", "lightgrey");
-          expressionNodes
-            .filter(function (g) {return g.gene==d;})
-            .attr("fill", function(g){
-              tissueLabels
-                .filter(function (t) {return g.tissue==t;})
-                .attr("opacity",1);
-  
-              return "#036666";
-            });
-        })
         .on("mouseout",function(d) { 
           expressionNodes
-            .attr("fill", "#036666");
+            .attr("fill", function (e) {return  expressionC(e.expression);})
           tissueLabels
             .attr("opacity",1);
           geneLabels
@@ -476,7 +503,7 @@ BOCC | paper | code | contact
           geneLabels
                 .attr("opacity",0.2);
           expressionNodes
-                .attr("fill", "lightgrey");
+                .attr("fill", "white");
           expressionNodes
             .filter(function (g) {return g.tissue==d;})
             .attr("fill", function(g){
@@ -489,7 +516,7 @@ BOCC | paper | code | contact
         })
         .on("mouseout",function(d) { 
           expressionNodes
-            .attr("fill", "#036666");
+          .attr("fill", function (c) {return  expressionC(c.expression);});
           tissueLabels
             .attr("opacity",1);
           geneLabels
@@ -592,10 +619,9 @@ BOCC | paper | code | contact
               }})
             .attr("r", 10)
             .attr("fill", function(d) { 
-              if(d.type=="HPO Parent"){
-                return "red";
-              }
-              if (d.id[2]==":"){
+              if(selectedNodes.includes(d.id)){
+                return "goldenrod";
+              }else if(d.id[2]==":"){
                 return "#27476E";
               }else{
                 return "#059fa0";
@@ -611,6 +637,72 @@ BOCC | paper | code | contact
       .style("font-size","10px")
       .style("opacity", 0.60);
  
+  function highlightNode(d){
+
+    if (d[2]!=":"){
+                tissueLabels
+                      .attr("opacity", 0.2);
+                geneLabels
+                      .filter(function (g) {return g!=d;})
+                      .attr("opacity",0.2);
+                eoCircles
+                      .filter(function (g) {return g!=d;})
+                      .attr("fill","lightgrey");
+                expressionNodes
+                      .attr("fill", "white");
+                expressionNodes
+                  .filter(function (g) {return g.gene==d;})
+                  .attr("fill", function(g){
+                    tissueLabels
+                      .filter(function (t) {return g.tissue==t;})
+                      .attr("opacity",1);
+        
+                    return  expressionC(g.expression);
+                  });
+
+                expressionText
+                    .filter(function (g) {return g.gene==d;})
+                    .attr("opacity", 0.80);
+        }
+        node
+          .style('opacity',0.1);
+        labels
+          .style('opacity',0.03);
+        link
+          .style('opacity',0.0);
+      
+      // d3.selectAll("tspan").filter(function(n) { return n.id === d.id; }).text( d.id[2]===":" ? d.id : (d.id in data.nodeLabels ? data.nodeLabels[d.id]:""));
+
+      link
+        .filter(function(link_d){return link_d.source.id === d || link_d.target.id === d;})
+        .style('opacity', function (link_d) { 
+            node
+              .filter(function(l) { return link_d.source.id === l.id || link_d.target.id === l.id; })
+              .style('opacity', 1)
+            labels
+              .filter(function(l) { return link_d.source.id === l.id || link_d.target.id === l.id; })
+              .style('opacity',0.8)
+            return 0.3;
+        })
+  };
+  function clearHighlight(d){
+            expressionText
+              .attr("opacity",0);
+            expressionNodes
+              .attr("fill", function (g) {return  expressionC(g.expression);});
+            tissueLabels
+              .attr("opacity",1);
+            geneLabels
+              .attr("opacity",1);
+            eoCircles
+              .attr("fill","#036666");
+            node
+              .style('opacity', 1)
+            link
+              .style('opacity',  0.1)
+            labels
+              .style('opacity',  0.6)
+  };
   // simulate network with repulision and springs
   var simulation = d3.forceSimulation(nodes)
       .force('charge', d3.forceManyBody())
@@ -654,25 +746,6 @@ BOCC | paper | code | contact
                 }
               }
             });
-
-          // link
-          //   .filter(function(d){
-          //     console.log( d.source.id, d.target.id,(d.source.id[2]!=":" && d.target.id[2]!=":"));
-          //     return (d.source.id[2]!=":" && d.target.id[2]!=":");})
-          //   .append('path')
-          //   .attr('opacity',1)
-          //   .attr('d', function (d) {
-          //     console.log(d.source.id,d.source.y)
-          //     start = d.source.y;   // X position of start node on the X axis
-          //     x = d.source.x; 
-          //     end = d.target.y;      // X position of end node
-          //     return ['M', x, start,    // the arc starts at the coordinate x=start, y=height-30 (where the starting node is)
-          //       'A',                            // This means we're gonna build an elliptical arc
-          //       (start - end)/2*4, ',',    // Next 2 lines are the coordinates of the inflexion point. Height of this point is proportional with start - end distance
-          //       (start - end)/2, 0, 0, ',',
-          //       start < end ? 1 : 0, x, ',', end] // We always want the arc on top. So if end is before start, putting 0 here turn the arc upside down.
-          //       .join(' ');
-          //   });
           
         labels
           .on("click", function(d){
@@ -688,70 +761,14 @@ BOCC | paper | code | contact
         // return form.enable(); // enable form
 
           node
-          .on('mouseover', function (d) {
-            // Highlight the nodes: every node is green except of him
-            // Highlight the connections
-
-            if (d.id[2]!=":"){
-              geneLabels
-                tissueLabels
-                      .attr("opacity", 0.2);
-                geneLabels
-                      .filter(function (g) {return g!=d.id;})
-                      .attr("opacity",0.2);
-                expressionNodes
-                      .attr("fill", "lightgrey");
-                expressionNodes
-                  .filter(function (g) {return g.gene==d.id;})
-                  .attr("fill", function(g){
-                    tissueLabels
-                      .filter(function (t) {return g.tissue==t;})
-                      .attr("opacity",1);
+          .on('mouseover', function (d) {highlightNode(d.id);})
+          .on('mouseout', function (d) {clearHighlight()});
+          
+          geneLabels
+            .on("mouseover",function(d) {highlightNode(d);})
+          .on("mouseout",function(d) {clearHighlight(d);})
+        });
         
-                    return "#036666";
-                  });
-
-            }
-        node
-          .style('opacity',0.1);
-        labels
-          .style('opacity',0.03);
-        link
-          .style('opacity',0.0);
-      
-      // d3.selectAll("tspan").filter(function(n) { return n.id === d.id; }).text( d.id[2]===":" ? d.id : (d.id in data.nodeLabels ? data.nodeLabels[d.id]:""));
-
-      link
-        .filter(function(link_d){return link_d.source.id === d.id || link_d.target.id === d.id;})
-        .style('opacity', function (link_d) { 
-            node
-              .filter(function(l) { return link_d.source.id === l.id || link_d.target.id === l.id; })
-              .style('opacity', 1)
-            labels
-              .filter(function(l) { return link_d.source.id === l.id || link_d.target.id === l.id; })
-              .style('opacity',0.8)
-            return 0.3;
-        })
-    })
-    .on('mouseout', function (d) {
-
-      expressionNodes
-        .attr("fill", "#036666");
-      tissueLabels
-        .attr("opacity",1);
-      geneLabels
-        .attr("opacity",1);
-
-      node
-        .style('opacity', 1)
-      link
-        .style('opacity',  0.1)
-      labels
-        .style('opacity',  0.6)
-    });
-
-      });
-  
   // network scaling factor
   var scaling_factor = 1;
 
@@ -794,15 +811,12 @@ BOCC | paper | code | contact
       .attr("stroke", "White")
       .style("stroke-width",1)
       .style("fill", function (d) {
-        if (d.id[2]==":"){
+        if (selectedNodes.includes(d.id)){
+          return "goldenrod";
+        }else if (d.id[2]==":"){
           return cScale(parseInt(data.hpoDepth[d.id]));
         }else{
           return "#059fa0";
-          // if (!Object.keys(tissues).includes(d.id)){
-          //   return "light blue";
-          // }else{
-          //   return "light blue";//geneColors(tissues[d.id]);
-          // };
         }
       })
       .attr("cx", function (d) { 
@@ -811,7 +825,7 @@ BOCC | paper | code | contact
       .attr("cy", function(d) {
         d.y = Math.max(margin.top, Math.min(width - margin.top, d.y*scaling_factor )); 
         return Math.max(margin.top, Math.min(width - margin.top, d.y*scaling_factor )); })
-      .attr("r", function(d) {return document.getElementById("layout-bipartite").checked ? 5: (selectedNodes.includes(d.id)? 12:8)})
+      .attr("r", function(d) {return document.getElementById("layout-bipartite").checked ? 5: (selectedNodes.includes(d.id)? 8:8)})
 
     // raise nodes above edges
     node
@@ -825,7 +839,6 @@ BOCC | paper | code | contact
       .attr("x2", function(d) { return Math.max(margin.left, Math.min(width - margin.left, d.target.x*scaling_factor )); })
       .attr("y2", function(d) { return Math.max(margin.left, Math.min(height - margin.left, d.target.y*scaling_factor )); });
     };
-
 
   })})};
 
