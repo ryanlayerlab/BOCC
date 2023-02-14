@@ -36,7 +36,16 @@ BOCC | paper | code | contact
 
       </div>
       <div class="col-auto">
-        <span class="expandOptions" id="sort-form-title"> cluster ranking &or; </span>
+        <span class="expandOptions" id="data-form-title"> dataset &or; </span>
+        <div id="data-form" hidden="hidden"> 
+            <input type="radio" class="form-check-input" id="data-2021" name="optradio" value="option1">
+            <label class="form-check-label" for="radio1">2021</label><br>
+            <input type="radio" class="form-check-input" id="data-2022" name="optradio" value="option2" checked>
+            <label class="form-check-label" for="radio2">2022</label><br>
+        </div>  
+      </div>
+      <div class="col-auto">
+        <span class="expandOptions" id="sort-form-title"> sort clusters by &or; </span>
         <div id="sort-form" hidden="hidden"> 
             <input type="radio" class="form-check-input" id="sort-count" name="optradio" value="option1" checked>
             <label class="form-check-label" for="radio1">matching terms</label><br>
@@ -150,7 +159,7 @@ BOCC | paper | code | contact
     .append("g")
       .attr("transform","translate(" + margin.left + "," + margin.top + ")")
 
-    d3.json("https://sky123martin.github.io/BOCC/network_2022.json", function(err,data){
+    d3.json("https://sky123martin.github.io/BOCC/network_"+(document.getElementById("data-2022").checked ? "2022" : "2021")+".json", function(err,data){
       console.log(err);
         // append the svg object to the body of the page
       min_x = Number.MAX_VALUE,
@@ -245,8 +254,7 @@ BOCC | paper | code | contact
     svgE.selectAll("text").remove();
     svgE.selectAll("circle").remove();
   
-    d3.json("https://raw.githubusercontent.com/sky123martin/BOCC/main/clusters_2022/"+cluster.replace(":",".")+".json", function(clusterdata) {
-      d3.json("https://raw.githubusercontent.com/sky123martin/BOCC/main/clusters_2022/"+cluster.replace(":",".")+".json", function(clusterdata) {
+    d3.json("https://raw.githubusercontent.com/sky123martin/BOCC/main/clusters_"+(document.getElementById("data-2022").checked ? "2022" : "2021")+"/"+cluster.replace(":",".")+".json", function(clusterdata) {
       var genes = [];
       var tissues = [];
       var gene_tissues = [];
@@ -840,7 +848,7 @@ BOCC | paper | code | contact
       .attr("y2", function(d) { return Math.max(margin.left, Math.min(height - margin.left, d.target.y*scaling_factor )); });
     };
 
-  })})};
+  })};
 
   function updateColors(){
     if(true){
@@ -1052,10 +1060,20 @@ BOCC | paper | code | contact
   document.getElementById("sort-form-title").addEventListener('click',function(){
     if(document.getElementById("sort-form").hidden){
       document.getElementById("sort-form").hidden="";
-      document.getElementById("sort-form-title").innerHTML=" cluster ranking &and; ";
+      document.getElementById("sort-form-title").innerHTML=" sort clusters by &and; ";
     }else{
       document.getElementById("sort-form").hidden="hidden";
-      document.getElementById("sort-form-title").innerHTML=" cluster ranking &or; ";
+      document.getElementById("sort-form-title").innerHTML=" sort clusters by &or; ";
+    }
+  });
+
+  document.getElementById("data-form-title").addEventListener('click',function(){
+    if(document.getElementById("data-form").hidden){
+      document.getElementById("data-form").hidden="";
+      document.getElementById("data-form-title").innerHTML=" dataset &and; ";
+    }else{
+      document.getElementById("data-form").hidden="hidden";
+      document.getElementById("data-form-title").innerHTML=" dataset &or; ";
     }
   });
 
@@ -1091,7 +1109,6 @@ BOCC | paper | code | contact
   document.getElementById("hpoParents").addEventListener('click',function(){processSelection(parseInt(document.getElementById("current-cluster").innerHTML));});
   document.getElementById("hpoLabel").addEventListener('click',function(){updateLabels();});
   document.getElementById("geneLabel").addEventListener('click',function(){updateLabels();});
-  // document.getElementById("geneExpression").addEventListener('click',function(){updateColors();});
 
   document.getElementById("layout-form").addEventListener('click', function (event) {
   if (event.target && event.target.matches("input[type='radio']")) {
