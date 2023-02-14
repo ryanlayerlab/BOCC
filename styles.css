@@ -1,6 +1,12 @@
 html, body {
     height: 100%;
 }
+#vizcontainer {
+  width: 2000px; 
+  height: 1000px; 
+  overflow-x: scroll;
+  white-space:no-wrap;
+}
 
 html {
     display: table;
