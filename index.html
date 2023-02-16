@@ -75,24 +75,29 @@
   </div>
 </div>
 
-<div>
-  <div class="container" style="overflow-x: scroll;">
+  <div class="container" style="text-align:left;">
     <div class="row cluster-info" id="cluster-info" hidden>
-        <div class="col" style="max-width: 2%;"></div>
-        <div class="col" style="max-width: 80%;">
-        <small><span id="cluster-id"></span></small><br>
-        <small>terms <span id="matching-count"></span>/<span id="total-count"></span>
-        | p-value=<span  id="pval"></span>
-        | cluster <span id="current-cluster"></span>/<span id="total-clusters"></span></small> 
-      </div>
+        <div class="col" style="max-width: 2%;">
+          <a id="previous" class="previous" hidden="hidden"> &#8249; </a>
+        </div>
 
-        <div class="col" style="max-width: 2%;"></div>
+        <div class="col-auto"  style="max-width: 1000px;">
+          <small><span id="cluster-id"></span></small><br>
+          <small>terms <span id="matching-count"></span>/<span id="total-count"></span>
+          | p-value=<span  id="pval"></span>
+          | cluster <span id="current-cluster"></span>/<span id="total-clusters"></span></small> 
+        </div>
+
+        <div class="col" style="max-width: 2%;">
+          <a id="next" class="next" hidden="hidden">&#8250;</a>
+        </div>
       </div>
+    </div>
+<div class="container" style="overflow-x: scroll;">
 
     <div class="row">
       <div class="col-auto">
         <!-- <br><br><br><br><br><br><br><br> -->
-        <a id="previous" class="previous" hidden="hidden"> &#8249; </a>
       </div>
       <div class="col-auto">
         <div id="network_viz" class="svg-container"></div>
@@ -102,7 +107,7 @@
       </div>
       <div class="col-auto">
         <!-- <br><br><br><br><br><br><br><br> -->
-        <a id="next" class="next" hidden="hidden">&#8250;</a>
+        <!-- <a id="next" class="next" hidden="hidden">&#8250;</a> -->
       </div>
     </div>
   </div>
@@ -896,9 +901,7 @@
   // GENES/HP TERM FORM //
   ////////////////////////
   
-  function displayCluster(cluster_info, selections){
-    var cluster = cluster_info["cluster"];
-
+  function displayCluster(cluster, selections){
 
     // clean up network drawing
     // svg.selectAll("circle")
@@ -927,8 +930,8 @@
     
   }
   
-  function processSelection(ranking = 1,selections = form.items) {
-    if(selections.length>0){
+  function processSelection(ranking = 1, selections = form.items) {
+    if(selections.length>0 && !selections[0].includes("2021")){
       let sortByCount = document.getElementById("sort-count").checked;
       // filter to only the filter nodes
       let filteredClusters = {};
@@ -1002,7 +1005,12 @@
       if(ranking>1){document.getElementById("previous").hidden = "";
       }else{document.getElementById("previous").hidden = "hidden";}
 
-      displayCluster(rankedClusters[ranking-1], selections);
+      displayCluster(rankedClusters[ranking-1]["cluster"], selections);
+
+  }else if (selections.length>0 && selections[0].includes("2021")){
+    document.getElementById("cluster-info").hidden = "hidden";
+    displayCluster(selections[0], []);
+    
   }else{
     svg.selectAll("line").remove();
     svg.selectAll("text").remove();
@@ -1019,11 +1027,15 @@
   };
 
   function buildSelectize(){
+    d3.json("https://sky123martin.github.io/BOCC/network_2021.json", function(err,data_2021){
+
     var optionsArray = [];
-    
+
+
     data.genes.forEach(function(o){optionsArray.push({name:o + (o in data.nodeLabels ? " - " + data.nodeLabels[o]: ""), value:o, group:"gene"})});
     data.diseases.forEach(function(o){optionsArray.push({name:o + (o in data.nodeLabels ? " - " + data.nodeLabels[o]: ""), value:o, group:"HP"})});
     data.clusters.forEach(function(o){optionsArray.push({name:o, value:o, group:"cluster"})});
+    data_2021.clusters.forEach(function(o){optionsArray.push({name:o, value:o, group:"cluster"})});
 
     $form = $("#select-node")
                 .selectize({
@@ -1049,7 +1061,7 @@
 
     form = $form[0].selectize;   
     form.setValue([])  
-  }   
+  })}   
   function clickNext(){
     processSelection(parseInt(document.getElementById("current-cluster").innerHTML)+1);
   };
