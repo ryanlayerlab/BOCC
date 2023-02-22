@@ -42,8 +42,8 @@ tspan {
 
 .gene-labels {
   font-family: Verdana;
-  font-size: 10px;
   color:#343434;
+  /* color:#b7d7d7; */
   font-weight: normal;
 }
 
@@ -71,6 +71,7 @@ tspan {
   color:#7b7b7b;
   max-width: 70%;
   text-align:left;
+  background-color: #ffffff";
 }
 .dropdown {
   font-family: Verdana;
@@ -127,7 +128,7 @@ tspan {
   
   .previous {
     vertical-align: middle;
-    font-size:8em;
+    font-size:2em;
     text-decoration:none;
     background-color: #ffffff;
     color: rgb(135, 135, 135);
@@ -135,7 +136,7 @@ tspan {
   
   .next {
     vertical-align:middle;
-    font-size:8em;
+    font-size:2em;
     text-decoration:none;
     background-color: #ffffff;
     color: rgb(135, 135, 135);
@@ -177,4 +178,53 @@ input[type='radio']:checked:after {
 input[type="checkbox"]:checked + span {
   border-color: red;
 background-color:red;
+}
+
+/* Tooltip container */
+.tooltip {
+  opacity:1;
+  position: relative;
+  display: inline-block;
+  border-bottom: 1px dotted black; /* If you want dots under the hoverable text */
+}
+
+/* Tooltip text */
+.tooltip .tooltiptext {
+  visibility: hidden;
+  width: 120px;
+  background-color: #555;
+  color: #fff;
+  text-align: center;
+  padding: 5px 0;
+  border-radius: 6px;
+
+  /* Position the tooltip text */
+  position: absolute;
+  z-index: -1;
+  width: 120px;
+  top: 100%;
+  left: 50%;
+  margin-left: -60px; /* Use half of the width (120/2 = 60), to center the tooltip */
+
+  /* Fade in tooltip */
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+/* Tooltip arrow */
+.tooltip .tooltiptext::after {
+  content: " ";
+  position: absolute;
+  bottom: 100%;  /* At the top of the tooltip */
+  left: 50%;
+  margin-left: -5px;
+  border-width: 5px;
+  border-style: solid;
+  border-color: transparent transparent black transparent;
+}
+
+/* Show the tooltip text when you mouse over the tooltip container */
+.tooltip:hover .tooltiptext {
+  visibility: visible;
+  opacity: 1;
 }
