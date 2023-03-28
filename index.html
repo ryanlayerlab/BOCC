@@ -27,7 +27,7 @@
   <br>
 
 <div style="text-align:right;">
-<span style="font-size: 14px;background-color:white;">biological ontology cluster comparison | paper | code | contact</span>
+<span style="font-size: 14px;background-color:white;opacity: 0.7;">biological ontology cluster comparison| paper | <a href="https://github.com/MSBradshaw/BOCC"  target="_blank">github<a></span>
 </div>
 
 <br>
@@ -77,14 +77,14 @@
     <div class="row cluster-info" id="cluster-info" hidden>
         <div class="col" style="max-width: 2%;">
           <a id="previous" class="previous" hidden="hidden"> &#8249; </a>
+          
         </div>
 
         <div class="col-auto"  style="max-width: 1000px;">
           <small><span id="cluster-id"></span></small><br>
           <small>terms <span id="matching-count"></span>/<span id="total-count"></span>
-          | <div id="pval-tooltip" class="tooltip">p-value <span class="tooltiptext">description about pvalue</span></div>=
-          <span  id="pval"></span>
-          | cluster <span id="current-cluster"></span>/<span id="total-clusters"></span></small> 
+          |  <div id="pval-tooltip" class="tooltip">PFD<span class="tooltiptext">Potential for Future Discovery Metric</span></div>=<span  id="pval"></span>
+          |  cluster <span id="current-cluster"></span>/<span id="total-clusters"></span></small> 
         </div>
 
         <div class="col" style="max-width: 2%;">
@@ -153,7 +153,7 @@
       .attr("width", width + margin.left + margin.right)
       .attr("height", height + margin.top + margin.bottom)
       .append("g")
-        .attr("transform","translate(" + margin.left + "," + margin.top + ")")
+      .attr("transform","translate(" + margin.left + "," + margin.top + ")")
 
   // append the svg object to the body of the page
   var svgE = d3.select("#expression_viz")
@@ -577,7 +577,7 @@
     .enter()
     .append("line")
       .style("stroke", "black")
-      .style("stroke-width", 1)
+      .style("stroke-width", 0.5)
       .style("opacity", 0.1);
 
   svg
@@ -587,40 +587,37 @@
   svg
     .selectAll("rect")
     .remove();
+
   var node = svg
-        .selectAll("circle")
+        .selectAll("rect")
         .data(nodes)
         .enter()
         // .filter(function (d) { return d.cluster==cluster; } )
-        .append("circle")
+        .append("rect")
             .attr("id", function (d) { return d.id; } )
-            .attr("stroke", "white")
-            .attr("stroke-width", 0)
-            .attr("cx", function (d) { 
-              if(Object.keys(d).includes("x")){
-                d.x = x(normX(d.x));
-                return x(normX(d.x)); 
+            .classed("node", true)
+            .attr("width", 10)
+            .attr("height", 10)
+            .attr("rx", function(d){
+              if(d.id[2]==":"){
+                return 1;
               }else{
-                d.x = width/2;
-                return width/2; 
-              }})
-            .attr("cy", function (d) { 
-              if(Object.keys(d).includes("y")){
-                d.y = y(normY(d.y));
-                return y(normY(d.y)); 
-              }else{
-                d.y = height/2;
-                return  height/2; 
-              }})
-            .attr("r", 10)
-            .attr("fill", function(d) { 
-              if(selectedNodes.includes(d.id)){
+                return 5;
+              }
+            })
+            .attr('transform', function() {
+                          return `translate(-${this.getAttribute('width') / 2}` +
+                            `, -${this.getAttribute('height') / 2})`;
+                        })
+            .style("fill", function (d) {
+              if (selectedNodes.includes(d.id)){
                 return "goldenrod";
-              }else if(d.id[2]==":"){
-                return "#27476E";
+              }else if (d.id[2]==":"){
+                return cScale(parseInt(data.hpoDepth[d.id]));
               }else{
                 return "#059fa0";
-              };});
+              }
+            });
 
   // initialize the labels
   var labels = svg
@@ -862,25 +859,32 @@
     d.x =  Math.max(margin.left, Math.min(width - margin.left, d3.event.x));
     d.y = Math.max(margin.top, Math.min(width - margin.top, d3.event.y));
 
-    d3.select(this).attr("cx", d.x*scaling_factor).attr("cy", d.y*scaling_factor);
+    d3.select(this).attr("x", d.x*scaling_factor).attr("y", d.y*scaling_factor);
     link.filter(function(l) { return l.source === d; }).attr("x1", d.x*scaling_factor).attr("y1", d.y*scaling_factor);
-    link.filter(function(l) { return l.target === d; }).attr("x2", d.x*scaling_factor).attr("y2", d.y*scaling_factor);
+    link
+      .filter(function(l) { return l.target === d; })
+      .attr("x2", d.x*scaling_factor)
+      .attr("y2", d.y*scaling_factor);
+
     labels.filter(function(n) { return n.id === d.id; })
           .attr("x", 2+d.x*scaling_factor)
           .attr("y",-10+d.y*scaling_factor)
           .attr("text-anchor", function(d) {
-            if( (2 + Math.max(margin.left, Math.min(width - margin.left, d.x*scaling_factor )))>width/2){
+            if((2 + Math.max(margin.left, Math.min(width - margin.left, d.x*scaling_factor )))>width/2){
               return "start"
             }else{
               return "end"
             };});
-    d3.selectAll("tspan").filter(function(n) { return n.id === d.id; }).attr("x", 10+d.x*scaling_factor).attr("y",-2+d.y*scaling_factor);
+    d3.selectAll("tspan")
+      .filter(function(n) { return n.id === d.id; })
+      .attr("x", 10+d.x*scaling_factor)
+      .attr("y",-2+d.y*scaling_factor);
     node
-        .style('opacity', 1)
-      link
-        .style('opacity',  0.1)
-      labels
-        .style('opacity',  0.5)
+      .style('opacity', 1);
+    link
+      .style('opacity',  0.1);
+    labels
+      .style('opacity',  0.5);
   }
   // run after force simulation
   
@@ -888,24 +892,14 @@
     //draw nodes
     node
       .interrupt()
-      .attr("stroke", "White")
-      .style("stroke-width",1)
-      .style("fill", function (d) {
-        if (selectedNodes.includes(d.id)){
-          return "goldenrod";
-        }else if (d.id[2]==":"){
-          return cScale(parseInt(data.hpoDepth[d.id]));
-        }else{
-          return "#059fa0";
-        }
-      })
-      .attr("cx", function (d) { 
+      .attr("x", function (d) { 
         d.x = Math.max(margin.left, Math.min(width - margin.left, d.x*scaling_factor ));
         return Math.max(margin.left, Math.min(width - margin.left, d.x*scaling_factor )); })
-      .attr("cy", function(d) {
+      .attr("y", function(d) {
         d.y = Math.max(margin.top, Math.min(width - margin.top, d.y*scaling_factor )); 
         return Math.max(margin.top, Math.min(width - margin.top, d.y*scaling_factor )); })
-      .attr("r", function(d) {return document.getElementById("layout-bipartite").checked ? 5: (selectedNodes.includes(d.id)? 8:8)})
+
+      // .attr("r", function(d) {return document.getElementById("layout-bipartite").checked ? 5: (selectedNodes.includes(d.id)? 8:8)})
 
     // raise nodes above edges
     node
@@ -938,8 +932,7 @@
                           .domain(uniqueTissues)
                           .range(d3.schemeCategory10);
     }
-    svg
-      .selectAll("circle")
+
   }
   function updateLabels(){
     // update HPO terms

@@ -40,25 +40,6 @@ tspan {
   color:#0b0b0b;
 }
 
-.gene-labels {
-  font-family: Verdana;
-  color:#343434;
-  /* color:#b7d7d7; */
-  font-weight: normal;
-}
-
-.eo-labels {
-  font-family: Verdana;
-  font-size: 7px;
-  color:#989898;
-  font-weight: normal;
-}
-.cluster-info {
-  color:#7e7e7e;
-  font-size: 15px;
-  text-align:middle;
-}
-
 .selectize {
   font-size: 12px;
   color:#545454;
@@ -82,16 +63,6 @@ tspan {
   font-size: 12px;
 }
 
-.nodeID {
-  font: 8px sans-serif;
-  fill: black;
-}
-
-.fullLabel {
-  font: 8px sans-serif;
-  fill: black;
-}
-
 .center {
   margin-left: auto;
   margin-right: auto;
@@ -112,14 +83,10 @@ tspan {
   left: 0;
 }
 
-/* a {
+a {
     text-decoration:none;
-    font-size:2em;
-    display: inline-block;
-    white-space: nowrap;
-    padding: 8px 16px;
     color: black;
-  } */
+  }
   
   a:hover {
     color: rgb(49, 49, 49);
@@ -228,3 +195,50 @@ background-color:red;
   visibility: visible;
   opacity: 1;
 }
+
+.gene-labels {
+  font-family: Verdana;
+  color:#343434;
+  /* color:#b7d7d7; */
+  font-weight: normal;
+}
+
+.eo-labels {
+  font-family: Verdana;
+  font-size: 7px;
+  color:#989898;
+  font-weight: normal;
+}
+.cluster-info {
+  color:#7e7e7e;
+  font-size: 15px;
+  text-align:middle;
+}
+
+.nodeID {
+  font: 8px sans-serif;
+  fill: black;
+}
+
+.fullLabel {
+  font: 8px sans-serif;
+  fill: black;
+}
+
+.node {
+  opacity: 1;
+  stroke: white;
+  stroke-width: 0.5;
+  /* fill: red; */
+  border-radius: 25px;
+}
+
+/* .node-gene {
+  width:10;
+  height:10
+
+}
+
+.node-HPO {
+  width:;
+} */
