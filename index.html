@@ -27,7 +27,7 @@
   <br>
 
 <div style="text-align:right;">
-<span style="font-size: 14px;background-color:white;opacity: 0.7;">biological ontology cluster comparison| paper | <a href="https://github.com/MSBradshaw/BOCC"  target="_blank">github<a></span>
+<span style="font-size: 14px;background-color:white;opacity: 0.7;"><a href="https://github.com/MSBradshaw/BOCC"  target="_blank">biological ontology cluster comparison</a> | <a href="https://github.com/sky123martin/BOCC"  target="_blank">code</a> | <a href="https://layerlab.org/"  target="_blank">layer lab</a></span>
 </div>
 
 <br>
@@ -261,7 +261,7 @@
     svgE.selectAll("circle").remove();
     var year = cluster.split(":")[0].split(".")[2];
 
-    d3.json("https://raw.githubusercontent.com/sky123martin/BOCC/main/clusters_"+year+"/"+cluster.replace(":",".")+".json", function(clusterdata) {
+    d3.json("https://raw.githubusercontent.com/sky123martin/BOCC/main/data/clusters_"+year+"/"+cluster.replace(":",".")+".json", function(clusterdata) {
       var genes = [];
       var tissues = [];
       var gene_tissues = [];
@@ -1096,7 +1096,7 @@
   };
 
   function buildSelectize(){
-    d3.json("https://sky123martin.github.io/BOCC/network_2021.json", function(err,data_2021){
+    d3.json("https://raw.githubusercontent.com/sky123martin/main/data/network_2021.json", function(err,data_2021){
 
     var optionsArray = [];
 
