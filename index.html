@@ -163,7 +163,7 @@
     .append("g")
       .attr("transform","translate(" + margin.left + "," + margin.top + ")")
 
-    d3.json("https://sky123martin.github.io/BOCC/network_2022.json", function(err,data){
+    d3.json("https://raw.githubusercontent.com/sky123martin/BOCC/main/data/network_2022.json", function(err,data){
       console.log(err);
         // append the svg object to the body of the page
       min_x = Number.MAX_VALUE,
