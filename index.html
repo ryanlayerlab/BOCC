@@ -27,7 +27,7 @@
   <br>
 
 <div style="text-align:right;">
-<span style="font-size: 14px;background-color:white;opacity: 0.7;"><a href="https://github.com/MSBradshaw/BOCC"  target="_blank">biological ontology cluster comparison</a> | <a href="https://github.com/sky123martin/BOCC"  target="_blank">code</a> | <a href="https://layerlab.org/"  target="_blank">layer lab</a></span>
+<span style="font-size: 14px;background-color:white;opacity: 0.7;"><a href="https://github.com/MSBradshaw/BOCC"  target="_blank">biological ontology cluster comparison</a> | <a href="https://github.com/ryanlayerlab/BOCC"  target="_blank">code</a> | <a href="https://layerlab.org/"  target="_blank">layer lab</a></span>
 </div>
 
 <br>
@@ -83,7 +83,7 @@
         <div class="col-auto"  style="max-width: 1000px;">
           <small><span id="cluster-id"></span></small><br>
           <small>terms <span id="matching-count"></span>/<span id="total-count"></span>
-          |  <div id="pval-tooltip" class="tooltip">PFD<span class="tooltiptext">Potential for Future Discovery Metric</span></div>=<span  id="pval"></span>
+          |  <div id="pval-tooltip" class="tooltip">p-value<span class="tooltiptext">Lowest predicted p-value</span></div><span  id="pval"></span>
           |  cluster <span id="current-cluster"></span>/<span id="total-clusters"></span></small> 
         </div>
 
@@ -163,7 +163,8 @@
     .append("g")
       .attr("transform","translate(" + margin.left + "," + margin.top + ")")
 
-    d3.json("https://raw.githubusercontent.com/sky123martin/BOCC/main/data/network_2022.json", function(err,data){
+    // d3.json("https://raw.githubusercontent.com/ryanlayerlab/BOCC/main/data/network_2022.json", function(err,data){
+    d3.json("https://raw.githubusercontent.com/ryanlayerlab/BOCC/main/data/network_2022_updated.json", function(err,data){
       console.log(err);
         // append the svg object to the body of the page
       min_x = Number.MAX_VALUE,
@@ -261,7 +262,7 @@
     svgE.selectAll("circle").remove();
     var year = cluster.split(":")[0].split(".")[2];
 
-    d3.json("https://raw.githubusercontent.com/sky123martin/BOCC/main/data/clusters_"+year+"/"+cluster.replace(":",".")+".json", function(clusterdata) {
+    d3.json("https://raw.githubusercontent.com/ryanlayerlab/BOCC/main/data/clusters_"+year+"/"+cluster.replace(":",".")+".json", function(clusterdata) {
       var genes = [];
       var tissues = [];
       var gene_tissues = [];
@@ -1007,23 +1008,25 @@
                 filteredClusters[selections[i]]["gene count"] = 0;
                 filteredClusters[selections[i]]["count"] = 0;
                 filteredClusters[selections[i]]["pval"] = data.pval[selections[i]];
+                filteredClusters[node.cluster]["pval_string"] = data.pval_string[selections[i]];
               }
           }else{
-          data.nodes.forEach(function(node){
-            if( node.id == selections[i]){
-              if (Object.keys(filteredClusters).includes(node.cluster)){// if cluster has already been added to dict, update its count
-                filteredClusters[node.cluster][((node.id[2]==":") ? "HPO count" : "gene count")] += 1;
-                filteredClusters[node.cluster]["count"] += 1;
-              }else{// if cluster hasnt then add to dict
-                filteredClusters[node.cluster] = {}
-                filteredClusters[node.cluster]["HPO count"] = ((node.id[2]==":") ? 1 : 0);
-                filteredClusters[node.cluster]["gene count"] = ((node.id[2]==":") ? 0 : 1);
-                filteredClusters[node.cluster]["count"] = 1;
-                filteredClusters[node.cluster]["pval"] = data.pval[node.cluster];
+            data.nodes.forEach(function(node){
+              if( node.id == selections[i]){
+                if (Object.keys(filteredClusters).includes(node.cluster)){// if cluster has already been added to dict, update its count
+                  filteredClusters[node.cluster][((node.id[2]==":") ? "HPO count" : "gene count")] += 1;
+                  filteredClusters[node.cluster]["count"] += 1;
+                }else{// if cluster hasnt then add to dict
+                  filteredClusters[node.cluster] = {}
+                  filteredClusters[node.cluster]["HPO count"] = ((node.id[2]==":") ? 1 : 0);
+                  filteredClusters[node.cluster]["gene count"] = ((node.id[2]==":") ? 0 : 1);
+                  filteredClusters[node.cluster]["count"] = 1;
+                  filteredClusters[node.cluster]["pval"] = data.pval[node.cluster];
+                  filteredClusters[node.cluster]["pval_string"] = data.pval_string[node.cluster];
+                }
               }
-            }
-          })
-        }
+            })
+          }
         }
       if(Object.keys(filteredClusters).length==0){
         document.getElementById("cluster-info").hidden = "hidden";
@@ -1046,7 +1049,8 @@
                               "HPO count": filteredClusters[cluster]["HPO count"],
                               "gene count": filteredClusters[cluster]["gene count"],
                               "count": filteredClusters[cluster]["count"],
-                              "pval": filteredClusters[cluster]["pval"]});
+                              "pval": filteredClusters[cluster]["pval"],
+                              "pval_string": filteredClusters[cluster]["pval_string"]});
           }});
 
     // Sort by either count or pval, break ties with other metric
@@ -1066,7 +1070,7 @@
       document.getElementById("cluster-id").innerHTML = rankedClusters[ranking-1]["cluster"];
       document.getElementById("matching-count").innerHTML = rankedClusters[ranking-1]["count"];
       document.getElementById("total-count").innerHTML = selections.length-selectedClusters.length;
-      document.getElementById("pval").innerHTML = rankedClusters[ranking-1]["pval"].toPrecision(4);
+      document.getElementById("pval").innerHTML = rankedClusters[ranking-1]["pval_string"];
 
       if( ranking<rankedClusters.length){document.getElementById("next").hidden = "";
       }else{ document.getElementById("next").hidden = "hidden";}
@@ -1096,45 +1100,47 @@
   };
 
   function buildSelectize(){
-    d3.json("https://raw.githubusercontent.com/sky123martin/BOCC/main/data/network_2021.json", function(err,data_2021){
+    d3.json("https://raw.githubusercontent.com/ryanlayerlab/BOCC/main/data/network_2021.json", function(err,data_2021){
 
-    var optionsArray = [];
+      var optionsArray = [];
 
 
-    data.genes.forEach(function(o){optionsArray.push({name:o + (o in data.nodeLabels ? " - " + data.nodeLabels[o]: ""), value:o, group:"gene"})});
-    data.diseases.forEach(function(o){optionsArray.push({name:o + (o in data.nodeLabels ? " - " + data.nodeLabels[o]: ""), value:o, group:"HP"})});
-    data.clusters.forEach(function(o){optionsArray.push({name:o, value:o, group:"cluster"})});
-    data_2021.clusters.forEach(function(o){optionsArray.push({name:o, value:o, group:"cluster"})});
+      data.genes.forEach(function(o){optionsArray.push({name:o + (o in data.nodeLabels ? " - " + data.nodeLabels[o]: ""), value:o, group:"gene"})});
+      data.diseases.forEach(function(o){optionsArray.push({name:o + (o in data.nodeLabels ? " - " + data.nodeLabels[o]: ""), value:o, group:"HP"})});
+      data.clusters.forEach(function(o){optionsArray.push({name:o, value:o, group:"cluster"})});
+      data_2021.clusters.forEach(function(o){optionsArray.push({name:o, value:o, group:"cluster"})});
 
-    $form = $("#select-node")
-                .selectize({
-                      valueField: 'value',
-                      labelField: 'name',
-                      searchField: ['name'],
-                      options: optionsArray,
-                      optgroups:[
-                        {value:"gene", label: "gene"},
-                        {value:"HP", label: "HP"},
-                        {value:"cluster", label: "cluster"},
-                      ],
-                      optgroupField: 'group',
-                      delimiter:',',
-                      create: false,
-                      hideSelected: true,
-                      sortField: "text",
-                      maxItems: 20,
-                      text:true,
-                      // onChange: function (){updateSelectize();},
-                      onDropdownOpen: function (){ 
-                        document.getElementById("pval-tooltip").style.opacity = 0;},
-                      onDropdownClose: function (){ 
-                        document.getElementById("pval-tooltip").style.opacity = 1;
-                        processSelection(1);}
-                  });
+      $form = $("#select-node")
+                  .selectize({
+                        valueField: 'value',
+                        labelField: 'name',
+                        searchField: ['name'],
+                        options: optionsArray,
+                        optgroups:[
+                          {value:"gene", label: "gene"},
+                          {value:"HP", label: "HP"},
+                          {value:"cluster", label: "cluster"},
+                        ],
+                        optgroupField: 'group',
+                        delimiter:',',
+                        create: false,
+                        hideSelected: true,
+                        sortField: "text",
+                        maxItems: 20,
+                        text:true,
+                        // onChange: function (){updateSelectize();},
+                        onDropdownOpen: function (){ 
+                          document.getElementById("pval-tooltip").style.opacity = 0;},
+                        onDropdownClose: function (){ 
+                          document.getElementById("pval-tooltip").style.opacity = 1;
+                          processSelection(1);}
+                    });
 
-    form = $form[0].selectize;   
-    form.setValue([])  
-  })}   
+      form = $form[0].selectize;   
+      form.setValue([])  
+      }
+    )
+  }   
   function clickNext(){
     processSelection(parseInt(document.getElementById("current-cluster").innerHTML)+1);
   };
